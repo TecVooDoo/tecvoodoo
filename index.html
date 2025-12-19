@@ -1,43 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="noindex, nofollow">
-
-  <title>TecVooDoo - Coming Soon</title>
-  <style>
-    body {
-      background-color: #0d0d0d;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-      margin: 0;
-      flex-direction: column;
-      gap: 16px;
-    }
-    /* Accessible title without showing duplicate text */
-    .sr-only {
-      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-    }
-    /* 500px logo, responsive on small screens */
-    img.logo {
-      max-width: 500px;   /* target size */
-      width: 100%;        /* shrink on small screens */
-      height: auto;
-      display: block;
-    }
-    p { color: #aaa; margin: 0; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TecVooDoo LLC - Games, Books & Apps</title>
+    <meta name="description" content="TecVooDoo LLC - Independent game development and publishing. Embrace the weird.">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1 class="sr-only">TecVooDoo</h1>
-  <img class="logo" src="./tecvoodoo-logo-small.png" alt="TecVooDoo logo" />
-  <p>Something awesome is coming soon...</p>
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="images/tecvoodoo-logo-small.png" alt="TecVooDoo">
+                <span>TecVooDoo</span>
+            </a>
+            <div class="nav-toggle" onclick="toggleNav()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul id="nav-menu">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="games.html">Games</a></li>
+                <li><a href="books.html">Books</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <img src="images/tecvoodoo-logo-small.png" alt="TecVooDoo LLC" class="hero-logo">
+            <h1>Welcome to TecVooDoo</h1>
+            <p>Independent game development and publishing. We create games, books, and apps that embrace the odd, the strange, and the dark.</p>
+        </section>
+
+        <div class="container">
+            <h2 class="section-title">What We Do</h2>
+            <p class="section-subtitle">Games that challenge, stories that disturb, experiences that linger.</p>
+
+            <div class="cards-grid">
+                <a href="games.html" class="card">
+                    <div class="card-content">
+                        <h3>Games</h3>
+                        <p>Word games with guillotines. Shrunken heads on spikes. Norman Rockwell meets Beetlejuice.</p>
+                        <span class="status live">Explore</span>
+                    </div>
+                </a>
+
+                <a href="books.html" class="card">
+                    <div class="card-content">
+                        <h3>Books</h3>
+                        <p>Dark fiction that doesn't flinch. Multidimensional stories where nothing is safe.</p>
+                        <span class="status live">Explore</span>
+                    </div>
+                </a>
+
+                <a href="about.html" class="card">
+                    <div class="card-content">
+                        <h3>About</h3>
+                        <p>One-person operation. Big ideas. No apologies.</p>
+                        <span class="status live">Learn More</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TecVooDoo LLC. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function toggleNav() {
+            document.getElementById('nav-menu').classList.toggle('active');
+        }
+    </script>
 </body>
 </html>

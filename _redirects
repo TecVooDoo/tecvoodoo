@@ -1,1 +1,5 @@
-https://www.tecvoodoo.com/*  https://tecvoodoo.com/:splat  301
+# Cloudflare Pages redirects
+# Note: www to non-www redirect should be configured in Cloudflare DNS/Page Rules
+# as _redirects only supports relative paths
+
+# Add any page redirects here as needed

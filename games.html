@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games - TecVooDoo LLC</title>
+    <meta name="description" content="Games by TecVooDoo LLC. Word games with guillotines, shrunken heads on spikes, and more.">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="images/tecvoodoo-logo-small.png" alt="TecVooDoo">
+                <span>TecVooDoo</span>
+            </a>
+            <div class="nav-toggle" onclick="toggleNav()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul id="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="games.html" class="active">Games</a></li>
+                <li><a href="books.html">Books</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="page-header">
+            <h1>Games</h1>
+            <p>Word games with guillotines. Shrunken heads on spikes. Norman Rockwell meets Beetlejuice.</p>
+        </div>
+
+        <div class="container">
+            <div class="cards-grid">
+                <!-- Don't Lose Your Head -->
+                <div class="card">
+                    <img src="images/dlyh-concept.png" alt="Don't Lose Your Head">
+                    <div class="card-content">
+                        <h3>Don't Lose Your Head</h3>
+                        <p>A word game where hangman meets battleship. Guess letters, sink ships, and try not to lose your head to the guillotine. Features a medieval fair theme with period-appropriate executions.</p>
+                        <p style="margin-top: 1rem;">
+                            <span class="status live">Playable</span>
+                        </p>
+                        <p style="margin-top: 1rem;">
+                            <a href="https://dlyh.pages.dev" target="_blank" class="btn btn-primary">Play Now</a>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Shrunken Head Toss -->
+                <div class="card">
+                    <div class="card-content">
+                        <h3>Shrunken Head Toss</h3>
+                        <p>Think cornhole, but with shrunken heads thrown onto a bed of spikes. A casual tossing game with a distinctly macabre twist.</p>
+                        <p style="margin-top: 1rem;">
+                            <span class="status development">In Development</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 4rem; padding: 2rem; background: var(--bg-card); border-radius: 12px; border: 1px solid #222;">
+                <h2 class="section-title">More Coming</h2>
+                <p class="section-subtitle">We have a backlog of twisted ideas waiting to be built. Check back for updates.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TecVooDoo LLC. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function toggleNav() {
+            document.getElementById('nav-menu').classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

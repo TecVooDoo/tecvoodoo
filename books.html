@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books - TecVooDoo LLC</title>
+    <meta name="description" content="Books by TecVooDoo LLC. Dark fiction that doesn't flinch.">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="images/tecvoodoo-logo-small.png" alt="TecVooDoo">
+                <span>TecVooDoo</span>
+            </a>
+            <div class="nav-toggle" onclick="toggleNav()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul id="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="games.html">Games</a></li>
+                <li><a href="books.html" class="active">Books</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="page-header">
+            <h1>Books</h1>
+            <p>Dark fiction that doesn't flinch. Multidimensional stories where nothing is safe.</p>
+        </div>
+
+        <div class="container">
+            <div class="cards-grid">
+                <!-- The M Particle Series -->
+                <div class="card">
+                    <div class="card-content">
+                        <h3>The M Particle Series</h3>
+                        <p>A five-book series (3 novels, 2 short story collections) exploring a multiverse in collapse. Dimensions are merging, reality is fracturing, and the only constants are the darkness at the edges.</p>
+                        <p style="margin-top: 1rem;">
+                            <span class="status on-hold">Series On Hold</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Murder, Malady and Monsters -->
+                <div class="card">
+                    <div class="card-content">
+                        <h3>Murder, Malady and Monsters</h3>
+                        <p>Book One of The M Particle Series. A boy who thought he was protecting his sister. A father who deserved what he got. A mother who let it happen. A dog named Meth. This is where it begins.</p>
+                        <p style="margin-top: 1rem;">
+                            <span class="status on-hold">Undergoing Rewrites</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 4rem; padding: 2rem; background: var(--bg-card); border-radius: 12px; border: 1px solid #222;">
+                <h2 class="section-title">About the Series</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">The M Particle Series is currently on hold while extensive rewrites are completed. The story explores themes that some will find uncomfortable. That's the point.</p>
+                <p style="color: var(--text-secondary);">Written under the pen name <strong style="color: var(--accent-cyan);">Rune Duvall</strong>.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TecVooDoo LLC. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function toggleNav() {
+            document.getElementById('nav-menu').classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

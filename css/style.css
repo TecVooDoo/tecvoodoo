@@ -368,6 +368,20 @@ footer a {
     color: var(--accent-cyan);
 }
 
+.footer-subscribe {
+    margin-bottom: 1.5rem;
+}
+
+.footer-subscribe p {
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.footer-subscribe .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
 /* Section titles */
 .section-title {
     font-size: 1.75rem;

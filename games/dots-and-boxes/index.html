@@ -35,6 +35,16 @@
             border-radius: 8px;
             border: 2px solid #333;
             transition: border-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .player .color-swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 2px solid rgba(255,255,255,0.3);
         }
 
         .player.active {
@@ -183,6 +193,41 @@
             border-color: var(--accent-cyan);
         }
 
+        /* Color picker */
+        .color-selector {
+            margin-top: 1.5rem;
+        }
+
+        .color-selector label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .color-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: white;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
         .grid-size-selector {
             margin-top: 1.5rem;
         }
@@ -226,6 +271,73 @@
         /* Join screen */
         .join-input {
             margin-top: 1rem;
+        }
+
+        /* My Games section */
+        .my-games {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #333;
+        }
+
+        .my-games h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .my-games-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .my-game-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .my-game-item:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .my-game-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .my-game-info .opponent {
+            color: var(--text-primary);
+            font-weight: bold;
+        }
+
+        .my-game-info .status {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .my-game-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .my-game-actions button {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .no-games {
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 1rem;
         }
 
         /* Status messages */
@@ -280,6 +392,11 @@
             .player {
                 flex: 1;
                 text-align: center;
+                justify-content: center;
+            }
+
+            .color-options {
+                justify-content: center;
             }
         }
     </style>
@@ -321,6 +438,13 @@
                 <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
             </div>
 
+            <div class="color-selector">
+                <label>Your Color</label>
+                <div class="color-options" id="color-options">
+                    <!-- Colors added by JS -->
+                </div>
+            </div>
+
             <div class="grid-size-selector">
                 <label>Grid Size</label>
                 <div class="grid-sizes">
@@ -331,13 +455,34 @@
             </div>
 
             <div class="setup-options" style="margin-top: 2rem;">
-                <div class="setup-option" onclick="startLocalGame()">
+                <div class="setup-option" onclick="showLocalSetup()">
                     <h3>Local Game</h3>
                     <p>Play against a friend on this device, taking turns</p>
                 </div>
                 <div class="setup-option" onclick="showOnlineOptions()">
                     <h3>Online Game</h3>
                     <p>Play against a friend by sharing a link</p>
+                </div>
+            </div>
+
+            <!-- Local game Player 2 setup (hidden by default) -->
+            <div id="local-setup" class="hidden" style="margin-top: 1.5rem;">
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid #333;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Player 2 Setup</h3>
+
+                    <div class="name-input" style="margin-top: 0;">
+                        <label for="player2-name-input">Player 2 Name</label>
+                        <input type="text" id="player2-name-input" placeholder="Enter Player 2's name" maxlength="20">
+                    </div>
+
+                    <div class="color-selector">
+                        <label>Player 2 Color</label>
+                        <div class="color-options" id="color-options-p2">
+                            <!-- Colors added by JS -->
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary start-button" onclick="startLocalGame()">Start Game</button>
                 </div>
             </div>
 
@@ -363,6 +508,14 @@
                 </div>
                 <button class="btn btn-primary start-button" onclick="joinOnlineGame()">Join Game</button>
             </div>
+
+            <!-- My Games Section -->
+            <div id="my-games" class="my-games hidden">
+                <h3>My Active Games</h3>
+                <div id="my-games-list" class="my-games-list">
+                    <!-- Games populated by JS -->
+                </div>
+            </div>
         </div>
 
         <!-- Game Screen (hidden by default) -->
@@ -370,12 +523,18 @@
             <div class="game-info">
                 <div class="player-info">
                     <div class="player player1 active" id="player1-display">
-                        <div class="name" id="player1-name">Player 1</div>
-                        <div class="score" id="player1-score">0</div>
+                        <div class="color-swatch" id="player1-color"></div>
+                        <div>
+                            <div class="name" id="player1-name">Player 1</div>
+                            <div class="score" id="player1-score">0</div>
+                        </div>
                     </div>
                     <div class="player player2" id="player2-display">
-                        <div class="name" id="player2-name">Player 2</div>
-                        <div class="score" id="player2-score">0</div>
+                        <div class="color-swatch" id="player2-color"></div>
+                        <div>
+                            <div class="name" id="player2-name">Player 2</div>
+                            <div class="score" id="player2-score">0</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -415,23 +574,53 @@
         // Supabase config
         const SUPABASE_URL = 'https://eenuxdjmsibcfhzgtslx.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_zwOfLO5ByeqZGS4iZdOw7A_sAlwaA_3';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Initialize Supabase (with fallback for offline/local play)
+        let supabaseClient = null;
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log('Supabase initialized successfully');
+            } else {
+                console.warn('Supabase library not loaded - online features disabled');
+            }
+        } catch (err) {
+            console.error('Failed to initialize Supabase:', err);
+        }
+
+        // Available colors
+        const PLAYER_COLORS = [
+            { name: 'Cyan', hex: '#00f0c0' },
+            { name: 'Red', hex: '#ff3366' },
+            { name: 'Purple', hex: '#9966ff' },
+            { name: 'Orange', hex: '#ff9933' },
+            { name: 'Yellow', hex: '#ffdd33' },
+            { name: 'Green', hex: '#33cc66' },
+            { name: 'Pink', hex: '#ff66b2' },
+            { name: 'Blue', hex: '#3399ff' }
+        ];
 
         // Game state
         let gameState = {
             id: null,
             gridSize: 3,
-            lines: {},          // { "h_0_0": 1, "v_1_2": 2 } - player who drew the line
-            boxes: {},          // { "0_0": 1 } - player who captured the box
+            lines: {},
+            boxes: {},
             currentTurn: 1,
             player1: 'Player 1',
             player2: 'Player 2',
+            color1: '#00f0c0',
+            color2: '#ff3366',
             score1: 0,
             score2: 0,
             isOnline: false,
-            myPlayer: 1,        // Which player am I (1 or 2)?
+            myPlayer: 1,
             gameOver: false
         };
+
+        // Selected colors
+        let selectedColor = PLAYER_COLORS[0].hex;
+        let selectedColorP2 = PLAYER_COLORS[1].hex;
 
         // Canvas setup
         const canvas = document.getElementById('board');
@@ -443,27 +632,37 @@
         let padding = 30;
         let hoveredLine = null;
 
-        // Colors
-        const COLORS = {
-            dot: '#e0e0e0',
-            line: '#444',
-            lineDrawn: '#00f0c0',
-            linePlayer2: '#ff3366',
-            lineHover: 'rgba(0, 240, 192, 0.5)',
-            boxPlayer1: 'rgba(0, 240, 192, 0.3)',
-            boxPlayer2: 'rgba(255, 51, 102, 0.3)',
-            text: '#e0e0e0'
-        };
-
         // Initialize
         function init() {
+            // Set up color picker for Player 1
+            const colorContainer = document.getElementById('color-options');
+            PLAYER_COLORS.forEach((color, index) => {
+                const div = document.createElement('div');
+                div.className = 'color-option' + (index === 0 ? ' selected' : '');
+                div.style.backgroundColor = color.hex;
+                div.title = color.name;
+                div.onclick = () => selectColor(color.hex, div, 1);
+                colorContainer.appendChild(div);
+            });
+
+            // Set up color picker for Player 2
+            const colorContainerP2 = document.getElementById('color-options-p2');
+            PLAYER_COLORS.forEach((color, index) => {
+                const div = document.createElement('div');
+                div.className = 'color-option' + (index === 1 ? ' selected' : '');
+                div.style.backgroundColor = color.hex;
+                div.title = color.name;
+                div.onclick = () => selectColor(color.hex, div, 2);
+                colorContainerP2.appendChild(div);
+            });
+
             // Check for game code in URL
             const urlParams = new URLSearchParams(window.location.search);
             const gameCode = urlParams.get('game');
 
             if (gameCode) {
                 document.getElementById('player-name').value = localStorage.getItem('dotsPlayerName') || '';
-                loadOnlineGame(gameCode);
+                loadOnlineGame(gameCode, true);
             }
 
             // Grid size selection
@@ -483,11 +682,44 @@
                 drawBoard();
             });
 
-            // Load saved name
+            // Load saved preferences
             const savedName = localStorage.getItem('dotsPlayerName');
             if (savedName) {
                 document.getElementById('player-name').value = savedName;
             }
+
+            const savedColor = localStorage.getItem('dotsPlayerColor');
+            if (savedColor) {
+                selectedColor = savedColor;
+                document.querySelectorAll('.color-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.style.backgroundColor === savedColor ||
+                        rgbToHex(opt.style.backgroundColor) === savedColor);
+                });
+            }
+
+            // Load My Games
+            loadMyGames();
+        }
+
+        // Convert rgb to hex
+        function rgbToHex(rgb) {
+            if (rgb.startsWith('#')) return rgb;
+            const result = rgb.match(/\d+/g);
+            if (!result) return rgb;
+            return '#' + result.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+        }
+
+        // Select color
+        function selectColor(hex, element, player = 1) {
+            if (player === 1) {
+                selectedColor = hex;
+                localStorage.setItem('dotsPlayerColor', hex);
+                document.querySelectorAll('#color-options .color-option').forEach(opt => opt.classList.remove('selected'));
+            } else {
+                selectedColorP2 = hex;
+                document.querySelectorAll('#color-options-p2 .color-option').forEach(opt => opt.classList.remove('selected'));
+            }
+            element.classList.add('selected');
         }
 
         // Navigation toggle
@@ -496,8 +728,16 @@
         }
 
         // Setup screen functions
+        function showLocalSetup() {
+            document.getElementById('local-setup').classList.remove('hidden');
+            document.getElementById('online-options').classList.add('hidden');
+            document.getElementById('join-input').classList.add('hidden');
+        }
+
         function showOnlineOptions() {
             document.getElementById('online-options').classList.remove('hidden');
+            document.getElementById('local-setup').classList.add('hidden');
+            document.getElementById('join-input').classList.add('hidden');
         }
 
         function showJoinGame() {
@@ -510,17 +750,93 @@
             return name;
         }
 
+        // My Games functions
+        function loadMyGames() {
+            const games = JSON.parse(localStorage.getItem('dotsMyGames') || '[]');
+            const container = document.getElementById('my-games');
+            const list = document.getElementById('my-games-list');
+
+            if (games.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            list.innerHTML = '';
+
+            games.forEach(game => {
+                const item = document.createElement('div');
+                item.className = 'my-game-item';
+                item.innerHTML = `
+                    <div class="my-game-info">
+                        <span class="opponent">vs ${game.opponent || 'Waiting...'}</span>
+                        <span class="status">Code: ${game.id} | ${game.gridSize}x${game.gridSize}</span>
+                    </div>
+                    <div class="my-game-actions">
+                        <button class="btn btn-outline" onclick="resumeGame('${game.id}')">Resume</button>
+                        <button class="btn btn-outline" onclick="removeGame('${game.id}')" style="color: var(--accent-red); border-color: var(--accent-red);">X</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function saveGameToMyGames(gameId, opponent, gridSize) {
+            let games = JSON.parse(localStorage.getItem('dotsMyGames') || '[]');
+
+            // Remove if already exists
+            games = games.filter(g => g.id !== gameId);
+
+            // Add to front
+            games.unshift({
+                id: gameId,
+                opponent: opponent,
+                gridSize: gridSize,
+                lastPlayed: Date.now()
+            });
+
+            // Keep only last 10 games
+            games = games.slice(0, 10);
+
+            localStorage.setItem('dotsMyGames', JSON.stringify(games));
+        }
+
+        function updateGameOpponent(gameId, opponent) {
+            let games = JSON.parse(localStorage.getItem('dotsMyGames') || '[]');
+            const game = games.find(g => g.id === gameId);
+            if (game) {
+                game.opponent = opponent;
+                game.lastPlayed = Date.now();
+                localStorage.setItem('dotsMyGames', JSON.stringify(games));
+            }
+        }
+
+        function removeGame(gameId) {
+            let games = JSON.parse(localStorage.getItem('dotsMyGames') || '[]');
+            games = games.filter(g => g.id !== gameId);
+            localStorage.setItem('dotsMyGames', JSON.stringify(games));
+            loadMyGames();
+        }
+
+        function resumeGame(gameId) {
+            loadOnlineGame(gameId);
+        }
+
         // Start local game
         function startLocalGame() {
-            const name = getPlayerName();
+            const name1 = getPlayerName();
+            const name2 = document.getElementById('player2-name-input').value.trim() || 'Player 2';
+
             gameState = {
                 id: null,
                 gridSize: gameState.gridSize,
                 lines: {},
                 boxes: {},
                 currentTurn: 1,
-                player1: name,
-                player2: 'Player 2',
+                player1: name1,
+                player2: name2,
+                color1: selectedColor,
+                color2: selectedColorP2,
                 score1: 0,
                 score2: 0,
                 isOnline: false,
@@ -536,7 +852,7 @@
 
         // Generate random game code
         function generateGameCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let code = '';
             for (let i = 0; i < 6; i++) {
                 code += chars[Math.floor(Math.random() * chars.length)];
@@ -546,6 +862,11 @@
 
         // Create online game
         async function createOnlineGame() {
+            if (!supabaseClient) {
+                alert('Online features are not available. Please check your internet connection or play a local game.');
+                return;
+            }
+
             const name = getPlayerName();
             const gameCode = generateGameCode();
 
@@ -557,6 +878,8 @@
                 currentTurn: 1,
                 player1: name,
                 player2: null,
+                color1: selectedColor,
+                color2: null,
                 score1: 0,
                 score2: 0,
                 isOnline: true,
@@ -565,11 +888,17 @@
             };
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('games')
                     .insert({
                         id: gameCode,
-                        board_state: { gridSize: gameState.gridSize, lines: {}, boxes: {} },
+                        board_state: {
+                            gridSize: gameState.gridSize,
+                            lines: {},
+                            boxes: {},
+                            color1: selectedColor,
+                            color2: null
+                        },
                         player1: name,
                         player2: null,
                         current_turn: 1,
@@ -578,6 +907,9 @@
                     });
 
                 if (error) throw error;
+
+                // Save to My Games
+                saveGameToMyGames(gameCode, null, gameState.gridSize);
 
                 showGameScreen();
                 updateDisplay();
@@ -606,13 +938,18 @@
                 return;
             }
 
-            await loadOnlineGame(gameCode, name);
+            await loadOnlineGame(gameCode, true);
         }
 
         // Load online game
-        async function loadOnlineGame(gameCode, joinAsPlayer2 = null) {
+        async function loadOnlineGame(gameCode, joinAsPlayer2 = false) {
+            if (!supabaseClient) {
+                alert('Online features are not available. Please check your internet connection.');
+                return;
+            }
+
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('games')
                     .select('*')
                     .eq('id', gameCode)
@@ -633,34 +970,47 @@
                     currentTurn: data.current_turn,
                     player1: data.player1,
                     player2: data.player2,
+                    color1: boardState.color1 || '#00f0c0',
+                    color2: boardState.color2 || '#ff3366',
                     score1: data.score1,
                     score2: data.score2,
                     isOnline: true,
-                    myPlayer: 2,
+                    myPlayer: 1,
                     gameOver: false
                 };
 
-                // If joining as player 2
-                if (joinAsPlayer2 && !data.player2) {
-                    const name = joinAsPlayer2 === true ? getPlayerName() : joinAsPlayer2;
+                // Determine which player we are
+                const savedName = localStorage.getItem('dotsPlayerName');
+
+                // If joining as player 2 and spot is open
+                if (joinAsPlayer2 && !data.player2 && savedName !== data.player1) {
+                    const name = getPlayerName();
                     gameState.player2 = name;
+                    gameState.color2 = selectedColor;
                     gameState.myPlayer = 2;
 
-                    await supabase
+                    await supabaseClient
                         .from('games')
-                        .update({ player2: name })
+                        .update({
+                            player2: name,
+                            board_state: {
+                                ...boardState,
+                                color2: selectedColor
+                            }
+                        })
                         .eq('id', gameCode);
-                } else if (data.player2) {
-                    // Game already has 2 players - determine which one we are
-                    const savedName = localStorage.getItem('dotsPlayerName');
-                    if (savedName === data.player1) {
-                        gameState.myPlayer = 1;
-                    } else if (savedName === data.player2) {
-                        gameState.myPlayer = 2;
-                    } else {
-                        // Spectator or returning player - assume player 2 for now
-                        gameState.myPlayer = 2;
+
+                    // Save to My Games
+                    saveGameToMyGames(gameCode, data.player1, gameState.gridSize);
+                } else if (savedName === data.player1) {
+                    gameState.myPlayer = 1;
+                    // Update My Games with opponent
+                    if (data.player2) {
+                        updateGameOpponent(gameCode, data.player2);
                     }
+                } else if (savedName === data.player2 || data.player2) {
+                    gameState.myPlayer = 2;
+                    saveGameToMyGames(gameCode, data.player1, gameState.gridSize);
                 }
 
                 showGameScreen();
@@ -680,7 +1030,7 @@
 
         // Subscribe to real-time updates
         function subscribeToGame(gameCode) {
-            supabase
+            supabaseClient
                 .channel(`game-${gameCode}`)
                 .on('postgres_changes',
                     { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameCode}` },
@@ -693,8 +1043,15 @@
                         gameState.currentTurn = data.current_turn;
                         gameState.player1 = data.player1;
                         gameState.player2 = data.player2;
+                        gameState.color1 = boardState.color1 || gameState.color1;
+                        gameState.color2 = boardState.color2 || gameState.color2;
                         gameState.score1 = data.score1;
                         gameState.score2 = data.score2;
+
+                        // Update My Games if opponent joined
+                        if (data.player2 && gameState.myPlayer === 1) {
+                            updateGameOpponent(gameCode, data.player2);
+                        }
 
                         updateDisplay();
                         drawBoard();
@@ -753,17 +1110,25 @@
                     if (gameState.boxes[boxKey]) {
                         const x = padding + col * cellSize;
                         const y = padding + row * cellSize;
-                        ctx.fillStyle = gameState.boxes[boxKey] === 1 ? COLORS.boxPlayer1 : COLORS.boxPlayer2;
+                        const playerNum = gameState.boxes[boxKey];
+                        const color = playerNum === 1 ? gameState.color1 : gameState.color2;
+
+                        // Fill box with player color (semi-transparent)
+                        ctx.fillStyle = color + '40'; // Add alpha
                         ctx.fillRect(x, y, cellSize, cellSize);
 
-                        // Draw initials
-                        ctx.fillStyle = gameState.boxes[boxKey] === 1 ? '#00f0c0' : '#ff3366';
+                        // Draw border with player color
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+
+                        // Draw initial
+                        ctx.fillStyle = color;
                         ctx.font = 'bold 24px sans-serif';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
-                        const initial = gameState.boxes[boxKey] === 1
-                            ? (gameState.player1 ? gameState.player1[0].toUpperCase() : '1')
-                            : (gameState.player2 ? gameState.player2[0].toUpperCase() : '2');
+                        const playerName = playerNum === 1 ? gameState.player1 : gameState.player2;
+                        const initial = playerName ? playerName[0].toUpperCase() : playerNum.toString();
                         ctx.fillText(initial, x + cellSize / 2, y + cellSize / 2);
                     }
                 }
@@ -778,14 +1143,16 @@
                     const x2 = x1 + cellSize;
 
                     if (gameState.lines[lineKey]) {
-                        ctx.strokeStyle = gameState.lines[lineKey] === 1 ? COLORS.lineDrawn : COLORS.linePlayer2;
+                        const playerNum = gameState.lines[lineKey];
+                        ctx.strokeStyle = playerNum === 1 ? gameState.color1 : gameState.color2;
                         ctx.lineWidth = LINE_WIDTH;
                         ctx.beginPath();
                         ctx.moveTo(x1, y);
                         ctx.lineTo(x2, y);
                         ctx.stroke();
                     } else if (hoveredLine === lineKey && canDrawLine()) {
-                        ctx.strokeStyle = COLORS.lineHover;
+                        const myColor = gameState.myPlayer === 1 ? gameState.color1 : gameState.color2;
+                        ctx.strokeStyle = myColor + '80';
                         ctx.lineWidth = HOVER_LINE_WIDTH;
                         ctx.beginPath();
                         ctx.moveTo(x1, y);
@@ -804,14 +1171,16 @@
                     const y2 = y1 + cellSize;
 
                     if (gameState.lines[lineKey]) {
-                        ctx.strokeStyle = gameState.lines[lineKey] === 1 ? COLORS.lineDrawn : COLORS.linePlayer2;
+                        const playerNum = gameState.lines[lineKey];
+                        ctx.strokeStyle = playerNum === 1 ? gameState.color1 : gameState.color2;
                         ctx.lineWidth = LINE_WIDTH;
                         ctx.beginPath();
                         ctx.moveTo(x, y1);
                         ctx.lineTo(x, y2);
                         ctx.stroke();
                     } else if (hoveredLine === lineKey && canDrawLine()) {
-                        ctx.strokeStyle = COLORS.lineHover;
+                        const myColor = gameState.myPlayer === 1 ? gameState.color1 : gameState.color2;
+                        ctx.strokeStyle = myColor + '80';
                         ctx.lineWidth = HOVER_LINE_WIDTH;
                         ctx.beginPath();
                         ctx.moveTo(x, y1);
@@ -826,7 +1195,7 @@
                 for (let col = 0; col <= n; col++) {
                     const x = padding + col * cellSize;
                     const y = padding + row * cellSize;
-                    ctx.fillStyle = COLORS.dot;
+                    ctx.fillStyle = '#e0e0e0';
                     ctx.beginPath();
                     ctx.arc(x, y, DOT_RADIUS, 0, Math.PI * 2);
                     ctx.fill();
@@ -846,7 +1215,6 @@
                     const y = padding + row * cellSize;
                     const x2 = x1 + cellSize;
 
-                    // Distance from point to line segment
                     if (mouseX >= x1 - threshold && mouseX <= x2 + threshold &&
                         Math.abs(mouseY - y) < threshold) {
                         return `h_${row}_${col}`;
@@ -896,7 +1264,7 @@
         function canDrawLine() {
             if (gameState.gameOver) return false;
             if (!gameState.isOnline) return true;
-            if (!gameState.player2) return false; // Waiting for opponent
+            if (!gameState.player2) return false;
             return gameState.currentTurn === gameState.myPlayer;
         }
 
@@ -960,7 +1328,6 @@
             const n = gameState.gridSize;
 
             if (type === 'h') {
-                // Horizontal line - check box above and below
                 if (r > 0 && isBoxComplete(r - 1, c)) {
                     completed.push(`${r - 1}_${c}`);
                 }
@@ -968,7 +1335,6 @@
                     completed.push(`${r}_${c}`);
                 }
             } else {
-                // Vertical line - check box left and right
                 if (c > 0 && isBoxComplete(r, c - 1)) {
                     completed.push(`${r}_${c - 1}`);
                 }
@@ -993,16 +1359,18 @@
 
         // Sync game state to Supabase
         async function syncToSupabase() {
-            if (!gameState.id) return;
+            if (!gameState.id || !supabaseClient) return;
 
             try {
-                await supabase
+                await supabaseClient
                     .from('games')
                     .update({
                         board_state: {
                             gridSize: gameState.gridSize,
                             lines: gameState.lines,
-                            boxes: gameState.boxes
+                            boxes: gameState.boxes,
+                            color1: gameState.color1,
+                            color2: gameState.color2
                         },
                         current_turn: gameState.currentTurn,
                         score1: gameState.score1,
@@ -1021,6 +1389,14 @@
             document.getElementById('player1-score').textContent = gameState.score1;
             document.getElementById('player2-score').textContent = gameState.score2;
 
+            // Update color swatches
+            document.getElementById('player1-color').style.backgroundColor = gameState.color1;
+            document.getElementById('player2-color').style.backgroundColor = gameState.color2 || '#333';
+
+            // Update score colors to match player colors
+            document.getElementById('player1-score').style.color = gameState.color1;
+            document.getElementById('player2-score').style.color = gameState.color2 || 'var(--text-secondary)';
+
             // Update active player highlight
             const p1 = document.getElementById('player1-display');
             const p2 = document.getElementById('player2-display');
@@ -1028,7 +1404,23 @@
             p1.classList.toggle('active', gameState.currentTurn === 1);
             p2.classList.toggle('active', gameState.currentTurn === 2);
 
-            // Update status message
+            // Update active border colors
+            if (gameState.currentTurn === 1) {
+                p1.style.borderColor = gameState.color1;
+                p1.style.boxShadow = `0 0 20px ${gameState.color1}40`;
+            } else {
+                p1.style.borderColor = '#333';
+                p1.style.boxShadow = 'none';
+            }
+
+            if (gameState.currentTurn === 2) {
+                p2.style.borderColor = gameState.color2 || '#333';
+                p2.style.boxShadow = gameState.color2 ? `0 0 20px ${gameState.color2}40` : 'none';
+            } else {
+                p2.style.borderColor = '#333';
+                p2.style.boxShadow = 'none';
+            }
+
             updateStatusMessage();
         }
 
@@ -1048,7 +1440,7 @@
                 } else if (gameState.score2 > gameState.score1) {
                     winner = gameState.player2;
                 } else {
-                    winner = null; // Tie
+                    winner = null;
                 }
 
                 if (winner) {
@@ -1094,35 +1486,42 @@
         // New game
         function newGame() {
             // Unsubscribe from current game if online
-            if (gameState.isOnline && gameState.id) {
-                supabase.removeAllChannels();
+            if (gameState.isOnline && gameState.id && supabaseClient) {
+                supabaseClient.removeAllChannels();
             }
 
             // Reset to setup screen
             document.getElementById('setup-screen').classList.remove('hidden');
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('online-options').classList.add('hidden');
+            document.getElementById('local-setup').classList.add('hidden');
             document.getElementById('join-input').classList.add('hidden');
             document.getElementById('game-link').classList.add('hidden');
 
             // Clear URL params
             window.history.replaceState({}, document.title, window.location.pathname);
 
-            // Reset game state
+            // Reset game state but keep gridSize
+            const gridSize = gameState.gridSize;
             gameState = {
                 id: null,
-                gridSize: gameState.gridSize,
+                gridSize: gridSize,
                 lines: {},
                 boxes: {},
                 currentTurn: 1,
                 player1: 'Player 1',
                 player2: 'Player 2',
+                color1: selectedColor,
+                color2: '#ff3366',
                 score1: 0,
                 score2: 0,
                 isOnline: false,
                 myPlayer: 1,
                 gameOver: false
             };
+
+            // Refresh My Games list
+            loadMyGames();
         }
 
         // Handle window resize

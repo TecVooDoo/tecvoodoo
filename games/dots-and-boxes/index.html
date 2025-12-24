@@ -509,6 +509,28 @@
                 <button class="btn btn-primary start-button" onclick="joinOnlineGame()">Join Game</button>
             </div>
 
+            <!-- Join via link setup (hidden by default) -->
+            <div id="join-link-setup" class="hidden" style="margin-top: 1.5rem;">
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid #333;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Join Game</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">You're joining a game. Set up your profile:</p>
+
+                    <div class="name-input" style="margin-top: 0;">
+                        <label for="join-player-name">Your Name</label>
+                        <input type="text" id="join-player-name" placeholder="Enter your name" maxlength="20">
+                    </div>
+
+                    <div class="color-selector">
+                        <label>Your Color</label>
+                        <div class="color-options" id="color-options-join">
+                            <!-- Colors added by JS -->
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary start-button" onclick="confirmJoinGame()">Join Game</button>
+                </div>
+            </div>
+
             <!-- My Games Section -->
             <div id="my-games" class="my-games hidden">
                 <h3>My Active Games</h3>
@@ -621,6 +643,13 @@
         // Selected colors
         let selectedColor = PLAYER_COLORS[0].hex;
         let selectedColorP2 = PLAYER_COLORS[1].hex;
+        let selectedColorJoin = PLAYER_COLORS[1].hex;
+
+        // Pending join game code (when coming from a link)
+        let pendingJoinGameCode = null;
+
+        // Touch input state for dot-to-dot selection
+        let selectedDot = null;
 
         // Canvas setup
         const canvas = document.getElementById('board');
@@ -645,7 +674,7 @@
                 colorContainer.appendChild(div);
             });
 
-            // Set up color picker for Player 2
+            // Set up color picker for Player 2 (local game)
             const colorContainerP2 = document.getElementById('color-options-p2');
             PLAYER_COLORS.forEach((color, index) => {
                 const div = document.createElement('div');
@@ -656,13 +685,26 @@
                 colorContainerP2.appendChild(div);
             });
 
+            // Set up color picker for joining online game
+            const colorContainerJoin = document.getElementById('color-options-join');
+            PLAYER_COLORS.forEach((color, index) => {
+                const div = document.createElement('div');
+                div.className = 'color-option' + (index === 1 ? ' selected' : '');
+                div.style.backgroundColor = color.hex;
+                div.title = color.name;
+                div.onclick = () => selectColor(color.hex, div, 'join');
+                colorContainerJoin.appendChild(div);
+            });
+
             // Check for game code in URL
             const urlParams = new URLSearchParams(window.location.search);
             const gameCode = urlParams.get('game');
 
             if (gameCode) {
-                document.getElementById('player-name').value = localStorage.getItem('dotsPlayerName') || '';
-                loadOnlineGame(gameCode, true);
+                // Store the game code and show join setup screen
+                pendingJoinGameCode = gameCode;
+                document.getElementById('join-player-name').value = localStorage.getItem('dotsPlayerName') || '';
+                document.getElementById('join-link-setup').classList.remove('hidden');
             }
 
             // Grid size selection
@@ -681,6 +723,10 @@
                 hoveredLine = null;
                 drawBoard();
             });
+
+            // Touch events for mobile (dot-to-dot selection)
+            canvas.addEventListener('touchstart', handleTouch, { passive: false });
+            canvas.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
 
             // Load saved preferences
             const savedName = localStorage.getItem('dotsPlayerName');
@@ -715,9 +761,12 @@
                 selectedColor = hex;
                 localStorage.setItem('dotsPlayerColor', hex);
                 document.querySelectorAll('#color-options .color-option').forEach(opt => opt.classList.remove('selected'));
-            } else {
+            } else if (player === 2) {
                 selectedColorP2 = hex;
                 document.querySelectorAll('#color-options-p2 .color-option').forEach(opt => opt.classList.remove('selected'));
+            } else if (player === 'join') {
+                selectedColorJoin = hex;
+                document.querySelectorAll('#color-options-join .color-option').forEach(opt => opt.classList.remove('selected'));
             }
             element.classList.add('selected');
         }
@@ -748,6 +797,21 @@
             const name = document.getElementById('player-name').value.trim() || 'Player';
             localStorage.setItem('dotsPlayerName', name);
             return name;
+        }
+
+        // Confirm join game (after setting name/color from link)
+        async function confirmJoinGame() {
+            if (!pendingJoinGameCode) return;
+
+            const name = document.getElementById('join-player-name').value.trim() || 'Player';
+            localStorage.setItem('dotsPlayerName', name);
+
+            // Hide the join setup
+            document.getElementById('join-link-setup').classList.add('hidden');
+
+            // Load the game with the selected name and color
+            await loadOnlineGameWithColor(pendingJoinGameCode, name, selectedColorJoin);
+            pendingJoinGameCode = null;
         }
 
         // My Games functions
@@ -939,6 +1003,86 @@
             }
 
             await loadOnlineGame(gameCode, true);
+        }
+
+        // Load online game with specific name and color (for joining via link)
+        async function loadOnlineGameWithColor(gameCode, playerName, playerColor) {
+            if (!supabaseClient) {
+                alert('Online features are not available. Please check your internet connection.');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('games')
+                    .select('*')
+                    .eq('id', gameCode)
+                    .single();
+
+                if (error || !data) {
+                    alert('Game not found. Please check the code and try again.');
+                    return;
+                }
+
+                const boardState = data.board_state || { gridSize: 3, lines: {}, boxes: {} };
+
+                gameState = {
+                    id: gameCode,
+                    gridSize: boardState.gridSize || 3,
+                    lines: boardState.lines || {},
+                    boxes: boardState.boxes || {},
+                    currentTurn: data.current_turn,
+                    player1: data.player1,
+                    player2: data.player2,
+                    color1: boardState.color1 || '#00f0c0',
+                    color2: boardState.color2 || playerColor,
+                    score1: data.score1,
+                    score2: data.score2,
+                    isOnline: true,
+                    myPlayer: 1,
+                    gameOver: false
+                };
+
+                // Determine if we're joining as player 2
+                if (!data.player2 && playerName !== data.player1) {
+                    // Join as player 2
+                    gameState.player2 = playerName;
+                    gameState.color2 = playerColor;
+                    gameState.myPlayer = 2;
+
+                    await supabaseClient
+                        .from('games')
+                        .update({
+                            player2: playerName,
+                            board_state: {
+                                ...boardState,
+                                color2: playerColor
+                            }
+                        })
+                        .eq('id', gameCode);
+
+                    saveGameToMyGames(gameCode, data.player1, gameState.gridSize);
+                } else if (playerName === data.player1) {
+                    gameState.myPlayer = 1;
+                    if (data.player2) {
+                        updateGameOpponent(gameCode, data.player2);
+                    }
+                } else {
+                    gameState.myPlayer = 2;
+                    saveGameToMyGames(gameCode, data.player1, gameState.gridSize);
+                }
+
+                showGameScreen();
+                updateDisplay();
+                resizeCanvas();
+                drawBoard();
+                checkGameOver();
+                subscribeToGame(gameCode);
+
+            } catch (err) {
+                console.error('Error loading game:', err);
+                alert('Failed to load game. Please try again.');
+            }
         }
 
         // Load online game
@@ -1195,10 +1339,30 @@
                 for (let col = 0; col <= n; col++) {
                     const x = padding + col * cellSize;
                     const y = padding + row * cellSize;
-                    ctx.fillStyle = '#e0e0e0';
-                    ctx.beginPath();
-                    ctx.arc(x, y, DOT_RADIUS, 0, Math.PI * 2);
-                    ctx.fill();
+
+                    // Check if this dot is selected (for touch input)
+                    const isSelected = selectedDot && selectedDot.row === row && selectedDot.col === col;
+
+                    if (isSelected) {
+                        // Draw larger highlighted dot
+                        const myColor = gameState.currentTurn === 1 ? gameState.color1 : gameState.color2;
+                        ctx.fillStyle = myColor;
+                        ctx.beginPath();
+                        ctx.arc(x, y, DOT_RADIUS * 2, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Draw ring around it
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(x, y, DOT_RADIUS * 2 + 3, 0, Math.PI * 2);
+                        ctx.stroke();
+                    } else {
+                        ctx.fillStyle = '#e0e0e0';
+                        ctx.beginPath();
+                        ctx.arc(x, y, DOT_RADIUS, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                 }
             }
         }
@@ -1266,6 +1430,83 @@
             if (!gameState.isOnline) return true;
             if (!gameState.player2) return false;
             return gameState.currentTurn === gameState.myPlayer;
+        }
+
+        // Get nearest dot to a position
+        function getDotAtPosition(x, y) {
+            const n = gameState.gridSize;
+            const threshold = cellSize * 0.4; // More generous for touch
+
+            for (let row = 0; row <= n; row++) {
+                for (let col = 0; col <= n; col++) {
+                    const dotX = padding + col * cellSize;
+                    const dotY = padding + row * cellSize;
+                    const distance = Math.sqrt((x - dotX) ** 2 + (y - dotY) ** 2);
+
+                    if (distance < threshold) {
+                        return { row, col };
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Get line key between two dots
+        function getLineBetweenDots(dot1, dot2) {
+            const rowDiff = dot2.row - dot1.row;
+            const colDiff = dot2.col - dot1.col;
+
+            // Must be adjacent (horizontal or vertical, distance of 1)
+            if (Math.abs(rowDiff) + Math.abs(colDiff) !== 1) {
+                return null;
+            }
+
+            if (rowDiff === 0) {
+                // Horizontal line
+                const col = Math.min(dot1.col, dot2.col);
+                return `h_${dot1.row}_${col}`;
+            } else {
+                // Vertical line
+                const row = Math.min(dot1.row, dot2.row);
+                return `v_${row}_${dot1.col}`;
+            }
+        }
+
+        // Handle touch (dot-to-dot selection for mobile)
+        function handleTouch(e) {
+            e.preventDefault();
+            if (!canDrawLine()) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+
+            const dot = getDotAtPosition(x, y);
+
+            if (!dot) {
+                // Tapped outside dots - clear selection
+                selectedDot = null;
+                drawBoard();
+                return;
+            }
+
+            if (!selectedDot) {
+                // First tap - select this dot
+                selectedDot = dot;
+                drawBoard();
+            } else {
+                // Second tap - try to draw line
+                const lineKey = getLineBetweenDots(selectedDot, dot);
+
+                if (lineKey && !gameState.lines[lineKey]) {
+                    drawLine(lineKey);
+                }
+
+                // Clear selection either way
+                selectedDot = null;
+                drawBoard();
+            }
         }
 
         // Handle click
@@ -1496,7 +1737,11 @@
             document.getElementById('online-options').classList.add('hidden');
             document.getElementById('local-setup').classList.add('hidden');
             document.getElementById('join-input').classList.add('hidden');
+            document.getElementById('join-link-setup').classList.add('hidden');
             document.getElementById('game-link').classList.add('hidden');
+
+            // Clear pending join
+            pendingJoinGameCode = null;
 
             // Clear URL params
             window.history.replaceState({}, document.title, window.location.pathname);

@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dots and Boxes - TecVooDoo LLC</title>
+    <meta name="description" content="Play Dots and Boxes online with friends. A classic strategy game where you draw lines and capture boxes.">
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        /* Game-specific styles */
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .player-info {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .player {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 2px solid #333;
+            transition: border-color 0.3s ease;
+        }
+
+        .player.active {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 192, 0.2);
+        }
+
+        .player .name {
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .player .score {
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .player.player2 .score {
+            color: var(--accent-red);
+        }
+
+        .player.player2.active {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.2);
+        }
+
+        .game-board {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        #board {
+            background: var(--bg-card);
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .game-link {
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #333;
+            margin-top: 1rem;
+        }
+
+        .game-link label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .game-link-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .game-link input {
+            flex: 1;
+            padding: 0.5rem;
+            background: var(--bg-dark);
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: monospace;
+        }
+
+        .game-link .btn {
+            padding: 0.5rem 1rem;
+        }
+
+        /* Setup screen */
+        .setup-screen {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .setup-screen h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--accent-cyan);
+        }
+
+        .setup-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .setup-option {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .setup-option:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .setup-option h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .setup-option p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .name-input {
+            margin-top: 1.5rem;
+        }
+
+        .name-input label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .name-input input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .name-input input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .grid-size-selector {
+            margin-top: 1.5rem;
+        }
+
+        .grid-size-selector label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .grid-sizes {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .grid-sizes button {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border: 2px solid #444;
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .grid-sizes button:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .grid-sizes button.selected {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 240, 192, 0.1);
+        }
+
+        .start-button {
+            margin-top: 2rem;
+            width: 100%;
+        }
+
+        /* Join screen */
+        .join-input {
+            margin-top: 1rem;
+        }
+
+        /* Status messages */
+        .status-message {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            font-size: 1.1rem;
+        }
+
+        .status-message.waiting {
+            background: rgba(255, 51, 102, 0.1);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        .status-message.your-turn {
+            background: rgba(0, 240, 192, 0.1);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+        }
+
+        .status-message.opponent-turn {
+            background: rgba(136, 136, 136, 0.1);
+            color: var(--text-secondary);
+            border: 1px solid #444;
+        }
+
+        .status-message.game-over {
+            background: rgba(255, 215, 0, 0.1);
+            color: #ffd700;
+            border: 1px solid #ffd700;
+        }
+
+        /* Hidden class */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .game-info {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .player-info {
+                justify-content: space-between;
+            }
+
+            .player {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../../index.html" class="logo">
+                <img src="../../images/tecvoodoo-logo-small.png" alt="TecVooDoo">
+                <span>TecVooDoo</span>
+            </a>
+            <div class="nav-toggle" onclick="toggleNav()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul id="nav-menu">
+                <li><a href="../../index.html">Home</a></li>
+                <li><a href="../../games.html" class="active">Games</a></li>
+                <li><a href="../../books.html">Books</a></li>
+                <li><a href="../../about.html">About</a></li>
+                <li><a href="../../contact.html">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="page-header">
+            <h1>Dots and Boxes</h1>
+            <p>The classic pen-and-paper strategy game. Draw lines, capture boxes, outsmart your opponent.</p>
+        </div>
+
+        <!-- Setup Screen -->
+        <div id="setup-screen" class="setup-screen">
+            <h2>Start a Game</h2>
+
+            <div class="name-input">
+                <label for="player-name">Your Name</label>
+                <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+            </div>
+
+            <div class="grid-size-selector">
+                <label>Grid Size</label>
+                <div class="grid-sizes">
+                    <button data-size="3" class="selected">3x3</button>
+                    <button data-size="4">4x4</button>
+                    <button data-size="5">5x5</button>
+                </div>
+            </div>
+
+            <div class="setup-options" style="margin-top: 2rem;">
+                <div class="setup-option" onclick="startLocalGame()">
+                    <h3>Local Game</h3>
+                    <p>Play against a friend on this device, taking turns</p>
+                </div>
+                <div class="setup-option" onclick="showOnlineOptions()">
+                    <h3>Online Game</h3>
+                    <p>Play against a friend by sharing a link</p>
+                </div>
+            </div>
+
+            <!-- Online sub-options (hidden by default) -->
+            <div id="online-options" class="hidden" style="margin-top: 1.5rem;">
+                <div class="setup-options">
+                    <div class="setup-option" onclick="createOnlineGame()">
+                        <h3>Create New Game</h3>
+                        <p>Start a new game and get a link to share</p>
+                    </div>
+                    <div class="setup-option" onclick="showJoinGame()">
+                        <h3>Join Game</h3>
+                        <p>Enter a game code to join an existing game</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Join game input (hidden by default) -->
+            <div id="join-input" class="hidden join-input">
+                <div class="form-group">
+                    <label for="game-code">Game Code</label>
+                    <input type="text" id="game-code" placeholder="Enter 6-character code" maxlength="6" style="text-transform: uppercase;">
+                </div>
+                <button class="btn btn-primary start-button" onclick="joinOnlineGame()">Join Game</button>
+            </div>
+        </div>
+
+        <!-- Game Screen (hidden by default) -->
+        <div id="game-screen" class="game-container hidden">
+            <div class="game-info">
+                <div class="player-info">
+                    <div class="player player1 active" id="player1-display">
+                        <div class="name" id="player1-name">Player 1</div>
+                        <div class="score" id="player1-score">0</div>
+                    </div>
+                    <div class="player player2" id="player2-display">
+                        <div class="name" id="player2-name">Player 2</div>
+                        <div class="score" id="player2-score">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="status-message" class="status-message your-turn">Your turn - draw a line!</div>
+
+            <div class="game-board">
+                <canvas id="board" width="400" height="400"></canvas>
+            </div>
+
+            <div id="game-link" class="game-link hidden">
+                <label>Share this link with your opponent:</label>
+                <div class="game-link-input">
+                    <input type="text" id="share-link" readonly>
+                    <button class="btn btn-outline" onclick="copyLink()">Copy</button>
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <button class="btn btn-outline" onclick="newGame()">New Game</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-subscribe">
+            <p>Get notified about major releases</p>
+            <a href="mailto:updates+subscribe@tecvoodoo.com?subject=Subscribe&body=Send this email to subscribe to TecVooDoo Updates." class="btn btn-outline">Subscribe</a>
+        </div>
+        <p>&copy; 2025 TecVooDoo LLC. All rights reserved.</p>
+    </footer>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // Supabase config
+        const SUPABASE_URL = 'https://eenuxdjmsibcfhzgtslx.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_zwOfLO5ByeqZGS4iZdOw7A_sAlwaA_3';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Game state
+        let gameState = {
+            id: null,
+            gridSize: 3,
+            lines: {},          // { "h_0_0": 1, "v_1_2": 2 } - player who drew the line
+            boxes: {},          // { "0_0": 1 } - player who captured the box
+            currentTurn: 1,
+            player1: 'Player 1',
+            player2: 'Player 2',
+            score1: 0,
+            score2: 0,
+            isOnline: false,
+            myPlayer: 1,        // Which player am I (1 or 2)?
+            gameOver: false
+        };
+
+        // Canvas setup
+        const canvas = document.getElementById('board');
+        const ctx = canvas.getContext('2d');
+        const DOT_RADIUS = 8;
+        const LINE_WIDTH = 6;
+        const HOVER_LINE_WIDTH = 8;
+        let cellSize = 100;
+        let padding = 30;
+        let hoveredLine = null;
+
+        // Colors
+        const COLORS = {
+            dot: '#e0e0e0',
+            line: '#444',
+            lineDrawn: '#00f0c0',
+            linePlayer2: '#ff3366',
+            lineHover: 'rgba(0, 240, 192, 0.5)',
+            boxPlayer1: 'rgba(0, 240, 192, 0.3)',
+            boxPlayer2: 'rgba(255, 51, 102, 0.3)',
+            text: '#e0e0e0'
+        };
+
+        // Initialize
+        function init() {
+            // Check for game code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameCode = urlParams.get('game');
+
+            if (gameCode) {
+                document.getElementById('player-name').value = localStorage.getItem('dotsPlayerName') || '';
+                loadOnlineGame(gameCode);
+            }
+
+            // Grid size selection
+            document.querySelectorAll('.grid-sizes button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.grid-sizes button').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    gameState.gridSize = parseInt(btn.dataset.size);
+                });
+            });
+
+            // Canvas events
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('click', handleClick);
+            canvas.addEventListener('mouseleave', () => {
+                hoveredLine = null;
+                drawBoard();
+            });
+
+            // Load saved name
+            const savedName = localStorage.getItem('dotsPlayerName');
+            if (savedName) {
+                document.getElementById('player-name').value = savedName;
+            }
+        }
+
+        // Navigation toggle
+        function toggleNav() {
+            document.getElementById('nav-menu').classList.toggle('active');
+        }
+
+        // Setup screen functions
+        function showOnlineOptions() {
+            document.getElementById('online-options').classList.remove('hidden');
+        }
+
+        function showJoinGame() {
+            document.getElementById('join-input').classList.remove('hidden');
+        }
+
+        function getPlayerName() {
+            const name = document.getElementById('player-name').value.trim() || 'Player';
+            localStorage.setItem('dotsPlayerName', name);
+            return name;
+        }
+
+        // Start local game
+        function startLocalGame() {
+            const name = getPlayerName();
+            gameState = {
+                id: null,
+                gridSize: gameState.gridSize,
+                lines: {},
+                boxes: {},
+                currentTurn: 1,
+                player1: name,
+                player2: 'Player 2',
+                score1: 0,
+                score2: 0,
+                isOnline: false,
+                myPlayer: 1,
+                gameOver: false
+            };
+
+            showGameScreen();
+            updateDisplay();
+            resizeCanvas();
+            drawBoard();
+        }
+
+        // Generate random game code
+        function generateGameCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return code;
+        }
+
+        // Create online game
+        async function createOnlineGame() {
+            const name = getPlayerName();
+            const gameCode = generateGameCode();
+
+            gameState = {
+                id: gameCode,
+                gridSize: gameState.gridSize,
+                lines: {},
+                boxes: {},
+                currentTurn: 1,
+                player1: name,
+                player2: null,
+                score1: 0,
+                score2: 0,
+                isOnline: true,
+                myPlayer: 1,
+                gameOver: false
+            };
+
+            try {
+                const { error } = await supabase
+                    .from('games')
+                    .insert({
+                        id: gameCode,
+                        board_state: { gridSize: gameState.gridSize, lines: {}, boxes: {} },
+                        player1: name,
+                        player2: null,
+                        current_turn: 1,
+                        score1: 0,
+                        score2: 0
+                    });
+
+                if (error) throw error;
+
+                showGameScreen();
+                updateDisplay();
+                resizeCanvas();
+                drawBoard();
+                showShareLink(gameCode);
+                updateStatusMessage('Waiting for opponent to join...');
+                document.getElementById('status-message').className = 'status-message waiting';
+
+                // Subscribe to changes
+                subscribeToGame(gameCode);
+
+            } catch (err) {
+                console.error('Error creating game:', err);
+                alert('Failed to create game. Please try again.');
+            }
+        }
+
+        // Join online game
+        async function joinOnlineGame() {
+            const name = getPlayerName();
+            const gameCode = document.getElementById('game-code').value.trim().toUpperCase();
+
+            if (gameCode.length !== 6) {
+                alert('Please enter a valid 6-character game code');
+                return;
+            }
+
+            await loadOnlineGame(gameCode, name);
+        }
+
+        // Load online game
+        async function loadOnlineGame(gameCode, joinAsPlayer2 = null) {
+            try {
+                const { data, error } = await supabase
+                    .from('games')
+                    .select('*')
+                    .eq('id', gameCode)
+                    .single();
+
+                if (error || !data) {
+                    alert('Game not found. Please check the code and try again.');
+                    return;
+                }
+
+                const boardState = data.board_state || { gridSize: 3, lines: {}, boxes: {} };
+
+                gameState = {
+                    id: gameCode,
+                    gridSize: boardState.gridSize || 3,
+                    lines: boardState.lines || {},
+                    boxes: boardState.boxes || {},
+                    currentTurn: data.current_turn,
+                    player1: data.player1,
+                    player2: data.player2,
+                    score1: data.score1,
+                    score2: data.score2,
+                    isOnline: true,
+                    myPlayer: 2,
+                    gameOver: false
+                };
+
+                // If joining as player 2
+                if (joinAsPlayer2 && !data.player2) {
+                    const name = joinAsPlayer2 === true ? getPlayerName() : joinAsPlayer2;
+                    gameState.player2 = name;
+                    gameState.myPlayer = 2;
+
+                    await supabase
+                        .from('games')
+                        .update({ player2: name })
+                        .eq('id', gameCode);
+                } else if (data.player2) {
+                    // Game already has 2 players - determine which one we are
+                    const savedName = localStorage.getItem('dotsPlayerName');
+                    if (savedName === data.player1) {
+                        gameState.myPlayer = 1;
+                    } else if (savedName === data.player2) {
+                        gameState.myPlayer = 2;
+                    } else {
+                        // Spectator or returning player - assume player 2 for now
+                        gameState.myPlayer = 2;
+                    }
+                }
+
+                showGameScreen();
+                updateDisplay();
+                resizeCanvas();
+                drawBoard();
+                checkGameOver();
+
+                // Subscribe to changes
+                subscribeToGame(gameCode);
+
+            } catch (err) {
+                console.error('Error loading game:', err);
+                alert('Failed to load game. Please try again.');
+            }
+        }
+
+        // Subscribe to real-time updates
+        function subscribeToGame(gameCode) {
+            supabase
+                .channel(`game-${gameCode}`)
+                .on('postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameCode}` },
+                    (payload) => {
+                        const data = payload.new;
+                        const boardState = data.board_state || {};
+
+                        gameState.lines = boardState.lines || {};
+                        gameState.boxes = boardState.boxes || {};
+                        gameState.currentTurn = data.current_turn;
+                        gameState.player1 = data.player1;
+                        gameState.player2 = data.player2;
+                        gameState.score1 = data.score1;
+                        gameState.score2 = data.score2;
+
+                        updateDisplay();
+                        drawBoard();
+                        checkGameOver();
+                    }
+                )
+                .subscribe();
+        }
+
+        // Show game screen
+        function showGameScreen() {
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+        }
+
+        // Show share link
+        function showShareLink(gameCode) {
+            const linkDiv = document.getElementById('game-link');
+            const linkInput = document.getElementById('share-link');
+            const url = `${window.location.origin}${window.location.pathname}?game=${gameCode}`;
+            linkInput.value = url;
+            linkDiv.classList.remove('hidden');
+        }
+
+        // Copy link to clipboard
+        function copyLink() {
+            const linkInput = document.getElementById('share-link');
+            linkInput.select();
+            document.execCommand('copy');
+
+            const btn = linkInput.nextElementSibling;
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = originalText, 2000);
+        }
+
+        // Resize canvas based on grid size
+        function resizeCanvas() {
+            const maxWidth = Math.min(500, window.innerWidth - 60);
+            cellSize = Math.floor((maxWidth - 2 * padding) / gameState.gridSize);
+            const size = cellSize * gameState.gridSize + 2 * padding;
+            canvas.width = size;
+            canvas.height = size;
+        }
+
+        // Draw the game board
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const n = gameState.gridSize;
+
+            // Draw captured boxes
+            for (let row = 0; row < n; row++) {
+                for (let col = 0; col < n; col++) {
+                    const boxKey = `${row}_${col}`;
+                    if (gameState.boxes[boxKey]) {
+                        const x = padding + col * cellSize;
+                        const y = padding + row * cellSize;
+                        ctx.fillStyle = gameState.boxes[boxKey] === 1 ? COLORS.boxPlayer1 : COLORS.boxPlayer2;
+                        ctx.fillRect(x, y, cellSize, cellSize);
+
+                        // Draw initials
+                        ctx.fillStyle = gameState.boxes[boxKey] === 1 ? '#00f0c0' : '#ff3366';
+                        ctx.font = 'bold 24px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        const initial = gameState.boxes[boxKey] === 1
+                            ? (gameState.player1 ? gameState.player1[0].toUpperCase() : '1')
+                            : (gameState.player2 ? gameState.player2[0].toUpperCase() : '2');
+                        ctx.fillText(initial, x + cellSize / 2, y + cellSize / 2);
+                    }
+                }
+            }
+
+            // Draw horizontal lines
+            for (let row = 0; row <= n; row++) {
+                for (let col = 0; col < n; col++) {
+                    const lineKey = `h_${row}_${col}`;
+                    const x1 = padding + col * cellSize;
+                    const y = padding + row * cellSize;
+                    const x2 = x1 + cellSize;
+
+                    if (gameState.lines[lineKey]) {
+                        ctx.strokeStyle = gameState.lines[lineKey] === 1 ? COLORS.lineDrawn : COLORS.linePlayer2;
+                        ctx.lineWidth = LINE_WIDTH;
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y);
+                        ctx.lineTo(x2, y);
+                        ctx.stroke();
+                    } else if (hoveredLine === lineKey && canDrawLine()) {
+                        ctx.strokeStyle = COLORS.lineHover;
+                        ctx.lineWidth = HOVER_LINE_WIDTH;
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y);
+                        ctx.lineTo(x2, y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Draw vertical lines
+            for (let row = 0; row < n; row++) {
+                for (let col = 0; col <= n; col++) {
+                    const lineKey = `v_${row}_${col}`;
+                    const x = padding + col * cellSize;
+                    const y1 = padding + row * cellSize;
+                    const y2 = y1 + cellSize;
+
+                    if (gameState.lines[lineKey]) {
+                        ctx.strokeStyle = gameState.lines[lineKey] === 1 ? COLORS.lineDrawn : COLORS.linePlayer2;
+                        ctx.lineWidth = LINE_WIDTH;
+                        ctx.beginPath();
+                        ctx.moveTo(x, y1);
+                        ctx.lineTo(x, y2);
+                        ctx.stroke();
+                    } else if (hoveredLine === lineKey && canDrawLine()) {
+                        ctx.strokeStyle = COLORS.lineHover;
+                        ctx.lineWidth = HOVER_LINE_WIDTH;
+                        ctx.beginPath();
+                        ctx.moveTo(x, y1);
+                        ctx.lineTo(x, y2);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Draw dots
+            for (let row = 0; row <= n; row++) {
+                for (let col = 0; col <= n; col++) {
+                    const x = padding + col * cellSize;
+                    const y = padding + row * cellSize;
+                    ctx.fillStyle = COLORS.dot;
+                    ctx.beginPath();
+                    ctx.arc(x, y, DOT_RADIUS, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Get line at position
+        function getLineAtPosition(mouseX, mouseY) {
+            const n = gameState.gridSize;
+            const threshold = 15;
+
+            // Check horizontal lines
+            for (let row = 0; row <= n; row++) {
+                for (let col = 0; col < n; col++) {
+                    const x1 = padding + col * cellSize;
+                    const y = padding + row * cellSize;
+                    const x2 = x1 + cellSize;
+
+                    // Distance from point to line segment
+                    if (mouseX >= x1 - threshold && mouseX <= x2 + threshold &&
+                        Math.abs(mouseY - y) < threshold) {
+                        return `h_${row}_${col}`;
+                    }
+                }
+            }
+
+            // Check vertical lines
+            for (let row = 0; row < n; row++) {
+                for (let col = 0; col <= n; col++) {
+                    const x = padding + col * cellSize;
+                    const y1 = padding + row * cellSize;
+                    const y2 = y1 + cellSize;
+
+                    if (mouseY >= y1 - threshold && mouseY <= y2 + threshold &&
+                        Math.abs(mouseX - x) < threshold) {
+                        return `v_${row}_${col}`;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // Handle mouse move
+        function handleMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const newHoveredLine = getLineAtPosition(mouseX, mouseY);
+
+            if (newHoveredLine !== hoveredLine) {
+                hoveredLine = newHoveredLine;
+                drawBoard();
+            }
+
+            // Update cursor
+            if (hoveredLine && !gameState.lines[hoveredLine] && canDrawLine()) {
+                canvas.style.cursor = 'pointer';
+            } else {
+                canvas.style.cursor = 'default';
+            }
+        }
+
+        // Check if current player can draw
+        function canDrawLine() {
+            if (gameState.gameOver) return false;
+            if (!gameState.isOnline) return true;
+            if (!gameState.player2) return false; // Waiting for opponent
+            return gameState.currentTurn === gameState.myPlayer;
+        }
+
+        // Handle click
+        function handleClick(e) {
+            if (!canDrawLine()) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const lineKey = getLineAtPosition(mouseX, mouseY);
+
+            if (lineKey && !gameState.lines[lineKey]) {
+                drawLine(lineKey);
+            }
+        }
+
+        // Draw a line
+        async function drawLine(lineKey) {
+            const currentPlayer = gameState.currentTurn;
+            gameState.lines[lineKey] = currentPlayer;
+
+            // Check for completed boxes
+            const completedBoxes = checkCompletedBoxes(lineKey);
+            let captured = false;
+
+            for (const box of completedBoxes) {
+                if (!gameState.boxes[box]) {
+                    gameState.boxes[box] = currentPlayer;
+                    captured = true;
+                    if (currentPlayer === 1) {
+                        gameState.score1++;
+                    } else {
+                        gameState.score2++;
+                    }
+                }
+            }
+
+            // Switch turns if no box was captured
+            if (!captured) {
+                gameState.currentTurn = currentPlayer === 1 ? 2 : 1;
+            }
+
+            updateDisplay();
+            drawBoard();
+            checkGameOver();
+
+            // Sync to Supabase if online
+            if (gameState.isOnline) {
+                await syncToSupabase();
+            }
+        }
+
+        // Check for completed boxes after drawing a line
+        function checkCompletedBoxes(lineKey) {
+            const completed = [];
+            const [type, row, col] = lineKey.split('_');
+            const r = parseInt(row);
+            const c = parseInt(col);
+            const n = gameState.gridSize;
+
+            if (type === 'h') {
+                // Horizontal line - check box above and below
+                if (r > 0 && isBoxComplete(r - 1, c)) {
+                    completed.push(`${r - 1}_${c}`);
+                }
+                if (r < n && isBoxComplete(r, c)) {
+                    completed.push(`${r}_${c}`);
+                }
+            } else {
+                // Vertical line - check box left and right
+                if (c > 0 && isBoxComplete(r, c - 1)) {
+                    completed.push(`${r}_${c - 1}`);
+                }
+                if (c < n && isBoxComplete(r, c)) {
+                    completed.push(`${r}_${c}`);
+                }
+            }
+
+            return completed;
+        }
+
+        // Check if a box is complete
+        function isBoxComplete(row, col) {
+            const top = `h_${row}_${col}`;
+            const bottom = `h_${row + 1}_${col}`;
+            const left = `v_${row}_${col}`;
+            const right = `v_${row}_${col + 1}`;
+
+            return gameState.lines[top] && gameState.lines[bottom] &&
+                   gameState.lines[left] && gameState.lines[right];
+        }
+
+        // Sync game state to Supabase
+        async function syncToSupabase() {
+            if (!gameState.id) return;
+
+            try {
+                await supabase
+                    .from('games')
+                    .update({
+                        board_state: {
+                            gridSize: gameState.gridSize,
+                            lines: gameState.lines,
+                            boxes: gameState.boxes
+                        },
+                        current_turn: gameState.currentTurn,
+                        score1: gameState.score1,
+                        score2: gameState.score2
+                    })
+                    .eq('id', gameState.id);
+            } catch (err) {
+                console.error('Error syncing to Supabase:', err);
+            }
+        }
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('player1-name').textContent = gameState.player1 || 'Player 1';
+            document.getElementById('player2-name').textContent = gameState.player2 || 'Waiting...';
+            document.getElementById('player1-score').textContent = gameState.score1;
+            document.getElementById('player2-score').textContent = gameState.score2;
+
+            // Update active player highlight
+            const p1 = document.getElementById('player1-display');
+            const p2 = document.getElementById('player2-display');
+
+            p1.classList.toggle('active', gameState.currentTurn === 1);
+            p2.classList.toggle('active', gameState.currentTurn === 2);
+
+            // Update status message
+            updateStatusMessage();
+        }
+
+        // Update status message
+        function updateStatusMessage(customMessage = null) {
+            const statusEl = document.getElementById('status-message');
+
+            if (customMessage) {
+                statusEl.textContent = customMessage;
+                return;
+            }
+
+            if (gameState.gameOver) {
+                let winner;
+                if (gameState.score1 > gameState.score2) {
+                    winner = gameState.player1;
+                } else if (gameState.score2 > gameState.score1) {
+                    winner = gameState.player2;
+                } else {
+                    winner = null; // Tie
+                }
+
+                if (winner) {
+                    statusEl.textContent = `Game Over! ${winner} wins!`;
+                } else {
+                    statusEl.textContent = "Game Over! It's a tie!";
+                }
+                statusEl.className = 'status-message game-over';
+                return;
+            }
+
+            if (gameState.isOnline) {
+                if (!gameState.player2) {
+                    statusEl.textContent = 'Waiting for opponent to join...';
+                    statusEl.className = 'status-message waiting';
+                } else if (gameState.currentTurn === gameState.myPlayer) {
+                    statusEl.textContent = 'Your turn - draw a line!';
+                    statusEl.className = 'status-message your-turn';
+                } else {
+                    const opponent = gameState.myPlayer === 1 ? gameState.player2 : gameState.player1;
+                    statusEl.textContent = `Waiting for ${opponent}...`;
+                    statusEl.className = 'status-message opponent-turn';
+                }
+            } else {
+                const currentName = gameState.currentTurn === 1 ? gameState.player1 : gameState.player2;
+                statusEl.textContent = `${currentName}'s turn`;
+                statusEl.className = 'status-message your-turn';
+            }
+        }
+
+        // Check if game is over
+        function checkGameOver() {
+            const n = gameState.gridSize;
+            const totalBoxes = n * n;
+            const capturedBoxes = Object.keys(gameState.boxes).length;
+
+            if (capturedBoxes === totalBoxes) {
+                gameState.gameOver = true;
+                updateStatusMessage();
+            }
+        }
+
+        // New game
+        function newGame() {
+            // Unsubscribe from current game if online
+            if (gameState.isOnline && gameState.id) {
+                supabase.removeAllChannels();
+            }
+
+            // Reset to setup screen
+            document.getElementById('setup-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('online-options').classList.add('hidden');
+            document.getElementById('join-input').classList.add('hidden');
+            document.getElementById('game-link').classList.add('hidden');
+
+            // Clear URL params
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // Reset game state
+            gameState = {
+                id: null,
+                gridSize: gameState.gridSize,
+                lines: {},
+                boxes: {},
+                currentTurn: 1,
+                player1: 'Player 1',
+                player2: 'Player 2',
+                score1: 0,
+                score2: 0,
+                isOnline: false,
+                myPlayer: 1,
+                gameOver: false
+            };
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (!document.getElementById('game-screen').classList.contains('hidden')) {
+                resizeCanvas();
+                drawBoard();
+            }
+        });
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>

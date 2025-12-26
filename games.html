@@ -135,11 +135,6 @@
         </div>
     </main>
 
-    <!-- Image Lightbox -->
-    <div id="image-lightbox" class="image-lightbox" onclick="closeLightbox()">
-        <img id="lightbox-img" src="" alt="Enlarged image">
-    </div>
-
     <footer>
         <div class="footer-subscribe">
             <p>Get notified about major releases</p>
@@ -177,5 +172,10 @@
             });
         });
     </script>
+
+    <!-- Image Lightbox - must be direct child of body for mobile fixed positioning -->
+    <div id="image-lightbox" class="image-lightbox" onclick="closeLightbox()">
+        <img id="lightbox-img" src="" alt="Enlarged image">
+    </div>
 </body>
 </html>

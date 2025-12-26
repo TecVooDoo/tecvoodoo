@@ -135,6 +135,11 @@
         </div>
     </main>
 
+    <!-- Image Lightbox -->
+    <div id="image-lightbox" class="image-lightbox" onclick="closeLightbox()">
+        <img id="lightbox-img" src="" alt="Enlarged image">
+    </div>
+
     <footer>
         <div class="footer-subscribe">
             <p>Get notified about major releases</p>
@@ -147,6 +152,30 @@
         function toggleNav() {
             document.getElementById('nav-menu').classList.toggle('active');
         }
+
+        // Image lightbox for click/tap to enlarge
+        function openLightbox(imgSrc) {
+            document.getElementById('lightbox-img').src = imgSrc;
+            document.getElementById('image-lightbox').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            document.getElementById('image-lightbox').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeLightbox();
+        });
+
+        // Add click handlers to all card images
+        document.querySelectorAll('.card-image img').forEach(function(img) {
+            img.addEventListener('click', function() {
+                openLightbox(this.src);
+            });
+        });
     </script>
 </body>
 </html>

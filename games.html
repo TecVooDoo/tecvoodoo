@@ -148,21 +148,35 @@
             document.getElementById('nav-menu').classList.toggle('active');
         }
 
-        // Image lightbox for click/tap to enlarge
+        // Image lightbox - create dynamically for better mobile support
         function openLightbox(imgSrc) {
-            document.getElementById('lightbox-img').src = imgSrc;
-            document.getElementById('image-lightbox').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
+            var lightbox = document.createElement('div');
+            lightbox.id = 'image-lightbox';
+            lightbox.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
 
-        function closeLightbox() {
-            document.getElementById('image-lightbox').classList.remove('active');
-            document.body.style.overflow = '';
+            var img = document.createElement('img');
+            img.src = imgSrc;
+            img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;border-radius:8px;';
+
+            lightbox.appendChild(img);
+            document.body.appendChild(lightbox);
+            document.body.style.overflow = 'hidden';
+
+            lightbox.onclick = function() {
+                document.body.removeChild(lightbox);
+                document.body.style.overflow = '';
+            };
         }
 
         // Close on escape key
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'Escape') {
+                var lightbox = document.getElementById('image-lightbox');
+                if (lightbox) {
+                    document.body.removeChild(lightbox);
+                    document.body.style.overflow = '';
+                }
+            }
         });
 
         // Add click handlers to all card images
@@ -172,10 +186,5 @@
             });
         });
     </script>
-
-    <!-- Image Lightbox - must be direct child of body for mobile fixed positioning -->
-    <div id="image-lightbox" class="image-lightbox" onclick="closeLightbox()">
-        <img id="lightbox-img" src="" alt="Enlarged image">
-    </div>
 </body>
 </html>

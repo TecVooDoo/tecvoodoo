@@ -156,16 +156,16 @@
         const SUPABASE_URL = 'https://eenuxdjmsibcfhzgtslx.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_zwOfLO5ByeqZGS4iZdOw7A_sAlwaA_3';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Check auth state on load
         async function checkAuth() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await sbClient.auth.getSession();
             updateUI(session);
         }
 
         // Listen for auth changes
-        supabase.auth.onAuthStateChange((event, session) => {
+        sbClient.auth.onAuthStateChange((event, session) => {
             console.log('Auth event:', event);
             updateUI(session);
         });
@@ -190,7 +190,7 @@
 
         async function signInWithGoogle() {
             showStatus('status-out', 'Redirecting to Google...', 'info');
-            const { error } = await supabase.auth.signInWithOAuth({
+            const { error } = await sbClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: window.location.href
@@ -206,7 +206,7 @@
                 return;
             }
             showStatus('status-out', 'Sending magic link...', 'info');
-            const { error } = await supabase.auth.signInWithOtp({
+            const { error } = await sbClient.auth.signInWithOtp({
                 email: email,
                 options: {
                     emailRedirectTo: window.location.href
@@ -221,14 +221,14 @@
 
         async function signInAnonymously() {
             showStatus('status-out', 'Creating anonymous session...', 'info');
-            const { error } = await supabase.auth.signInAnonymously();
+            const { error } = await sbClient.auth.signInAnonymously();
             if (error) {
                 showStatus('status-out', error.message, 'error');
             }
         }
 
         async function signOut() {
-            const { error } = await supabase.auth.signOut();
+            const { error } = await sbClient.auth.signOut();
             if (error) {
                 showStatus('status-in', error.message, 'error');
             } else {

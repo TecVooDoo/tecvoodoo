@@ -378,6 +378,183 @@
             display: none !important;
         }
 
+        /* Auth UI */
+        .auth-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid #333;
+        }
+
+        .auth-bar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .auth-bar .user-email {
+            color: var(--accent-cyan);
+        }
+
+        .auth-bar .btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        /* Auth Modal */
+        .auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .auth-modal-content {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #444;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .auth-modal h2 {
+            color: var(--accent-cyan);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .auth-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .auth-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border: 1px solid #444;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+        }
+
+        .auth-option:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 240, 192, 0.05);
+        }
+
+        .auth-option .icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .auth-option .label {
+            flex: 1;
+        }
+
+        .auth-divider {
+            text-align: center;
+            color: var(--text-secondary);
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #444;
+        }
+
+        .auth-divider::before {
+            left: 0;
+        }
+
+        .auth-divider::after {
+            right: 0;
+        }
+
+        .magic-link-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .magic-link-form input {
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .magic-link-form input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .auth-modal-close {
+            display: block;
+            width: 100%;
+            margin-top: 1.5rem;
+            padding: 0.75rem;
+            background: transparent;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .auth-modal-close:hover {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .auth-message {
+            text-align: center;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .auth-message.success {
+            background: rgba(0, 240, 192, 0.1);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+        }
+
+        .auth-message.error {
+            background: rgba(255, 51, 102, 0.1);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             .game-info {
@@ -422,6 +599,56 @@
             </ul>
         </div>
     </nav>
+
+    <!-- Auth Bar -->
+    <div class="auth-bar">
+        <div id="auth-signed-out">
+            <button class="btn btn-outline" onclick="showAuthModal()">Sign In</button>
+        </div>
+        <div id="auth-signed-in" class="hidden">
+            <div class="user-info">
+                <span>Signed in as</span>
+                <span class="user-email" id="user-email"></span>
+            </div>
+            <button class="btn btn-outline" onclick="signOut()">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal hidden">
+        <div class="auth-modal-content">
+            <h2>Sign In</h2>
+
+            <div class="auth-options">
+                <div class="auth-option" onclick="signInWithGoogle()">
+                    <div class="icon">G</div>
+                    <div class="label">Continue with Google</div>
+                </div>
+                <div class="auth-option" onclick="signInWithFacebook()">
+                    <div class="icon">f</div>
+                    <div class="label">Continue with Facebook</div>
+                </div>
+            </div>
+
+            <div class="auth-divider">or</div>
+
+            <div class="magic-link-form">
+                <input type="email" id="magic-link-email" placeholder="Enter your email">
+                <button class="btn btn-primary" onclick="sendMagicLink()">Send Magic Link</button>
+            </div>
+
+            <div class="auth-divider">or</div>
+
+            <div class="auth-option" onclick="signInAnonymously()">
+                <div class="icon">?</div>
+                <div class="label">Continue as Guest</div>
+            </div>
+
+            <div id="auth-message" class="auth-message hidden"></div>
+
+            <button class="auth-modal-close" onclick="hideAuthModal()">Cancel</button>
+        </div>
+    </div>
 
     <main>
         <div class="page-header">
@@ -610,6 +837,203 @@
             console.error('Failed to initialize Supabase:', err);
         }
 
+        // Current authenticated user
+        let currentUser = null;
+        let currentPlayerId = null; // UUID from players table
+
+        // Auth functions
+        function showAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('auth-message').classList.add('hidden');
+        }
+
+        function hideAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        function showAuthMessage(message, isError = false) {
+            const msgEl = document.getElementById('auth-message');
+            msgEl.textContent = message;
+            msgEl.className = 'auth-message ' + (isError ? 'error' : 'success');
+            msgEl.classList.remove('hidden');
+        }
+
+        async function signInWithGoogle() {
+            if (!supabaseClient) {
+                showAuthMessage('Online features not available', true);
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.href.split('?')[0]
+                }
+            });
+
+            if (error) {
+                showAuthMessage(error.message, true);
+            }
+        }
+
+        async function signInWithFacebook() {
+            if (!supabaseClient) {
+                showAuthMessage('Online features not available', true);
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'facebook',
+                options: {
+                    redirectTo: window.location.href.split('?')[0]
+                }
+            });
+
+            if (error) {
+                showAuthMessage(error.message, true);
+            }
+        }
+
+        async function sendMagicLink() {
+            if (!supabaseClient) {
+                showAuthMessage('Online features not available', true);
+                return;
+            }
+
+            const email = document.getElementById('magic-link-email').value.trim();
+            if (!email) {
+                showAuthMessage('Please enter your email', true);
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.signInWithOtp({
+                email: email,
+                options: {
+                    emailRedirectTo: window.location.href.split('?')[0]
+                }
+            });
+
+            if (error) {
+                showAuthMessage(error.message, true);
+            } else {
+                showAuthMessage('Check your email for the magic link!');
+            }
+        }
+
+        async function signInAnonymously() {
+            if (!supabaseClient) {
+                showAuthMessage('Online features not available', true);
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.signInAnonymously();
+
+            if (error) {
+                showAuthMessage(error.message, true);
+            } else {
+                hideAuthModal();
+            }
+        }
+
+        async function signOut() {
+            if (!supabaseClient) return;
+
+            await supabaseClient.auth.signOut();
+            currentUser = null;
+            currentPlayerId = null;
+            updateAuthUI();
+        }
+
+        function updateAuthUI() {
+            const signedOutEl = document.getElementById('auth-signed-out');
+            const signedInEl = document.getElementById('auth-signed-in');
+            const userEmailEl = document.getElementById('user-email');
+
+            if (currentUser) {
+                signedOutEl.classList.add('hidden');
+                signedInEl.classList.remove('hidden');
+
+                // Show email or "Guest" for anonymous users
+                if (currentUser.is_anonymous) {
+                    userEmailEl.textContent = 'Guest';
+                } else {
+                    userEmailEl.textContent = currentUser.email || 'User';
+                }
+            } else {
+                signedOutEl.classList.remove('hidden');
+                signedInEl.classList.add('hidden');
+            }
+        }
+
+        // Ensure player exists in players table
+        async function ensurePlayerRecord() {
+            if (!supabaseClient || !currentUser) return null;
+
+            // Check if player record exists
+            const { data: existingPlayer } = await supabaseClient
+                .from('players')
+                .select('id')
+                .eq('auth_id', currentUser.id)
+                .single();
+
+            if (existingPlayer) {
+                return existingPlayer.id;
+            }
+
+            // Create new player record
+            const displayName = currentUser.user_metadata?.full_name ||
+                                currentUser.user_metadata?.name ||
+                                currentUser.email?.split('@')[0] ||
+                                'Player';
+
+            const { data: newPlayer, error } = await supabaseClient
+                .from('players')
+                .insert({
+                    auth_id: currentUser.id,
+                    email: currentUser.email,
+                    display_name: displayName
+                })
+                .select('id')
+                .single();
+
+            if (error) {
+                console.error('Error creating player record:', error);
+                return null;
+            }
+
+            return newPlayer.id;
+        }
+
+        // Initialize auth state
+        async function initAuth() {
+            if (!supabaseClient) return;
+
+            // Get current session
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                currentPlayerId = await ensurePlayerRecord();
+                updateAuthUI();
+            }
+
+            // Listen for auth changes
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                console.log('Auth state changed:', event);
+                if (session) {
+                    currentUser = session.user;
+                    currentPlayerId = await ensurePlayerRecord();
+                    hideAuthModal();
+                } else {
+                    currentUser = null;
+                    currentPlayerId = null;
+                }
+                updateAuthUI();
+
+                // Reload My Games when auth changes
+                loadMyGames();
+            });
+        }
+
         // Available colors
         const PLAYER_COLORS = [
             { name: 'Cyan', hex: '#00f0c0' },
@@ -745,6 +1169,9 @@
 
             // Load My Games
             loadMyGames();
+
+            // Initialize auth
+            initAuth();
         }
 
         // Convert rgb to hex
@@ -815,10 +1242,62 @@
         }
 
         // My Games functions
-        function loadMyGames() {
-            const games = JSON.parse(localStorage.getItem('dotsMyGames') || '[]');
+        async function loadMyGames() {
             const container = document.getElementById('my-games');
             const list = document.getElementById('my-games-list');
+
+            let games = [];
+
+            // If logged in, fetch games from database
+            if (currentPlayerId && supabaseClient) {
+                try {
+                    const { data: sessionData } = await supabaseClient
+                        .from('session_players')
+                        .select(`
+                            session_id,
+                            player_number,
+                            game_sessions (
+                                id,
+                                status,
+                                state,
+                                game_type
+                            )
+                        `)
+                        .eq('player_id', currentPlayerId)
+                        .eq('game_sessions.game_type', 'dots-and-boxes')
+                        .order('joined_at', { ascending: false })
+                        .limit(10);
+
+                    if (sessionData) {
+                        // For each game, get opponent info
+                        for (const sp of sessionData) {
+                            if (!sp.game_sessions) continue;
+
+                            // Get opponent
+                            const { data: opponentData } = await supabaseClient
+                                .from('session_players')
+                                .select('players(display_name)')
+                                .eq('session_id', sp.session_id)
+                                .neq('player_id', currentPlayerId)
+                                .single();
+
+                            games.push({
+                                id: sp.session_id,
+                                opponent: opponentData?.players?.display_name || null,
+                                gridSize: sp.game_sessions.state?.gridSize || 3,
+                                status: sp.game_sessions.status
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error loading games from database:', err);
+                }
+            }
+
+            // Fall back to localStorage if not logged in or no db games
+            if (games.length === 0) {
+                games = JSON.parse(localStorage.getItem('dotsMyGames') || '[]');
+            }
 
             if (games.length === 0) {
                 container.classList.add('hidden');
@@ -829,12 +1308,14 @@
             list.innerHTML = '';
 
             games.forEach(game => {
+                const statusText = game.status === 'completed' ? ' (Finished)' :
+                                   game.status === 'waiting' ? ' (Waiting)' : '';
                 const item = document.createElement('div');
                 item.className = 'my-game-item';
                 item.innerHTML = `
                     <div class="my-game-info">
                         <span class="opponent">vs ${game.opponent || 'Waiting...'}</span>
-                        <span class="status">Code: ${game.id} | ${game.gridSize}x${game.gridSize}</span>
+                        <span class="status">Code: ${game.id} | ${game.gridSize}x${game.gridSize}${statusText}</span>
                     </div>
                     <div class="my-game-actions">
                         <button class="btn btn-outline" onclick="resumeGame('${game.id}')">Resume</button>
@@ -952,27 +1433,69 @@
             };
 
             try {
-                const { error } = await supabaseClient
-                    .from('games')
+                // Create game session in new schema
+                const { error: sessionError } = await supabaseClient
+                    .from('game_sessions')
                     .insert({
                         id: gameCode,
-                        board_state: {
+                        game_type: 'dots-and-boxes',
+                        state: {
                             gridSize: gameState.gridSize,
                             lines: {},
                             boxes: {},
                             color1: selectedColor,
                             color2: null
                         },
-                        player1: name,
-                        player2: null,
+                        status: 'waiting',
+                        is_vs_ai: false,
                         current_turn: 1,
-                        score1: 0,
-                        score2: 0
+                        created_by: currentPlayerId
                     });
 
-                if (error) throw error;
+                if (sessionError) throw sessionError;
 
-                // Save to My Games
+                // For unauthenticated users, we need to create a temporary player or use a guest approach
+                // Store player info in the game state instead of session_players for guests
+                let playerId = currentPlayerId;
+
+                if (!playerId) {
+                    // Create anonymous player record for this game
+                    const { data: anonPlayer, error: anonError } = await supabaseClient
+                        .from('players')
+                        .insert({
+                            display_name: name,
+                            is_ai: false
+                        })
+                        .select('id')
+                        .single();
+
+                    if (anonError) {
+                        console.error('Error creating anonymous player:', anonError);
+                        // Fall back to storing name in state only
+                        playerId = null;
+                    } else {
+                        playerId = anonPlayer.id;
+                    }
+                }
+
+                // Add player 1 to session_players if we have a player ID
+                if (playerId) {
+                    const { error: playerError } = await supabaseClient
+                        .from('session_players')
+                        .insert({
+                            session_id: gameCode,
+                            player_id: playerId,
+                            player_number: 1,
+                            color: selectedColor,
+                            score: 0
+                        });
+
+                    if (playerError) {
+                        console.error('Error adding player to session:', playerError);
+                    }
+                }
+
+                // Save to My Games (localStorage for now, will update for auth users)
                 saveGameToMyGames(gameCode, null, gameState.gridSize);
 
                 showGameScreen();
@@ -1013,63 +1536,97 @@
             }
 
             try {
-                const { data, error } = await supabaseClient
-                    .from('games')
+                // Fetch game session from new schema
+                const { data: session, error: sessionError } = await supabaseClient
+                    .from('game_sessions')
                     .select('*')
                     .eq('id', gameCode)
                     .single();
 
-                if (error || !data) {
+                if (sessionError || !session) {
                     alert('Game not found. Please check the code and try again.');
                     return;
                 }
 
-                const boardState = data.board_state || { gridSize: 3, lines: {}, boxes: {} };
+                // Fetch players in this session
+                const { data: sessionPlayers } = await supabaseClient
+                    .from('session_players')
+                    .select('*, players(display_name)')
+                    .eq('session_id', gameCode);
+
+                const player1Data = sessionPlayers?.find(p => p.player_number === 1);
+                const player2Data = sessionPlayers?.find(p => p.player_number === 2);
+
+                const boardState = session.state || { gridSize: 3, lines: {}, boxes: {} };
+                const player1Name = player1Data?.players?.display_name || 'Player 1';
+                const player2Name = player2Data?.players?.display_name || null;
 
                 gameState = {
                     id: gameCode,
                     gridSize: boardState.gridSize || 3,
                     lines: boardState.lines || {},
                     boxes: boardState.boxes || {},
-                    currentTurn: data.current_turn,
-                    player1: data.player1,
-                    player2: data.player2,
-                    color1: boardState.color1 || '#00f0c0',
-                    color2: boardState.color2 || playerColor,
-                    score1: data.score1,
-                    score2: data.score2,
+                    currentTurn: session.current_turn,
+                    player1: player1Name,
+                    player2: player2Name,
+                    color1: player1Data?.color || boardState.color1 || '#00f0c0',
+                    color2: player2Data?.color || playerColor,
+                    score1: player1Data?.score || 0,
+                    score2: player2Data?.score || 0,
                     isOnline: true,
                     myPlayer: 1,
-                    gameOver: false
+                    gameOver: session.status === 'completed'
                 };
 
                 // Determine if we're joining as player 2
-                if (!data.player2 && playerName !== data.player1) {
+                if (!player2Data && playerName !== player1Name) {
                     // Join as player 2
                     gameState.player2 = playerName;
                     gameState.color2 = playerColor;
                     gameState.myPlayer = 2;
 
-                    await supabaseClient
-                        .from('games')
-                        .update({
-                            player2: playerName,
-                            board_state: {
-                                ...boardState,
-                                color2: playerColor
-                            }
-                        })
-                        .eq('id', gameCode);
+                    // Create or get player ID
+                    let playerId = currentPlayerId;
+                    if (!playerId) {
+                        const { data: anonPlayer } = await supabaseClient
+                            .from('players')
+                            .insert({ display_name: playerName, is_ai: false })
+                            .select('id')
+                            .single();
+                        playerId = anonPlayer?.id;
+                    }
 
-                    saveGameToMyGames(gameCode, data.player1, gameState.gridSize);
-                } else if (playerName === data.player1) {
+                    if (playerId) {
+                        // Add player 2 to session
+                        await supabaseClient
+                            .from('session_players')
+                            .insert({
+                                session_id: gameCode,
+                                player_id: playerId,
+                                player_number: 2,
+                                color: playerColor,
+                                score: 0
+                            });
+
+                        // Update session status to active
+                        await supabaseClient
+                            .from('game_sessions')
+                            .update({
+                                status: 'active',
+                                state: { ...boardState, color2: playerColor }
+                            })
+                            .eq('id', gameCode);
+                    }
+
+                    saveGameToMyGames(gameCode, player1Name, gameState.gridSize);
+                } else if (playerName === player1Name || currentPlayerId === player1Data?.player_id) {
                     gameState.myPlayer = 1;
-                    if (data.player2) {
-                        updateGameOpponent(gameCode, data.player2);
+                    if (player2Name) {
+                        updateGameOpponent(gameCode, player2Name);
                     }
                 } else {
                     gameState.myPlayer = 2;
-                    saveGameToMyGames(gameCode, data.player1, gameState.gridSize);
+                    saveGameToMyGames(gameCode, player1Name, gameState.gridSize);
                 }
 
                 showGameScreen();
@@ -1093,68 +1650,102 @@
             }
 
             try {
-                const { data, error } = await supabaseClient
-                    .from('games')
+                // Fetch game session from new schema
+                const { data: session, error: sessionError } = await supabaseClient
+                    .from('game_sessions')
                     .select('*')
                     .eq('id', gameCode)
                     .single();
 
-                if (error || !data) {
+                if (sessionError || !session) {
                     alert('Game not found. Please check the code and try again.');
                     return;
                 }
 
-                const boardState = data.board_state || { gridSize: 3, lines: {}, boxes: {} };
+                // Fetch players in this session
+                const { data: sessionPlayers } = await supabaseClient
+                    .from('session_players')
+                    .select('*, players(display_name)')
+                    .eq('session_id', gameCode);
+
+                const player1Data = sessionPlayers?.find(p => p.player_number === 1);
+                const player2Data = sessionPlayers?.find(p => p.player_number === 2);
+
+                const boardState = session.state || { gridSize: 3, lines: {}, boxes: {} };
+                const player1Name = player1Data?.players?.display_name || 'Player 1';
+                const player2Name = player2Data?.players?.display_name || null;
 
                 gameState = {
                     id: gameCode,
                     gridSize: boardState.gridSize || 3,
                     lines: boardState.lines || {},
                     boxes: boardState.boxes || {},
-                    currentTurn: data.current_turn,
-                    player1: data.player1,
-                    player2: data.player2,
-                    color1: boardState.color1 || '#00f0c0',
-                    color2: boardState.color2 || '#ff3366',
-                    score1: data.score1,
-                    score2: data.score2,
+                    currentTurn: session.current_turn,
+                    player1: player1Name,
+                    player2: player2Name,
+                    color1: player1Data?.color || boardState.color1 || '#00f0c0',
+                    color2: player2Data?.color || '#ff3366',
+                    score1: player1Data?.score || 0,
+                    score2: player2Data?.score || 0,
                     isOnline: true,
                     myPlayer: 1,
-                    gameOver: false
+                    gameOver: session.status === 'completed'
                 };
 
                 // Determine which player we are
                 const savedName = localStorage.getItem('dotsPlayerName');
 
                 // If joining as player 2 and spot is open
-                if (joinAsPlayer2 && !data.player2 && savedName !== data.player1) {
+                if (joinAsPlayer2 && !player2Data && savedName !== player1Name) {
                     const name = getPlayerName();
                     gameState.player2 = name;
                     gameState.color2 = selectedColor;
                     gameState.myPlayer = 2;
 
-                    await supabaseClient
-                        .from('games')
-                        .update({
-                            player2: name,
-                            board_state: {
-                                ...boardState,
-                                color2: selectedColor
-                            }
-                        })
-                        .eq('id', gameCode);
+                    // Create or get player ID
+                    let playerId = currentPlayerId;
+                    if (!playerId) {
+                        const { data: anonPlayer } = await supabaseClient
+                            .from('players')
+                            .insert({ display_name: name, is_ai: false })
+                            .select('id')
+                            .single();
+                        playerId = anonPlayer?.id;
+                    }
+
+                    if (playerId) {
+                        // Add player 2 to session
+                        await supabaseClient
+                            .from('session_players')
+                            .insert({
+                                session_id: gameCode,
+                                player_id: playerId,
+                                player_number: 2,
+                                color: selectedColor,
+                                score: 0
+                            });
+
+                        // Update session status to active
+                        await supabaseClient
+                            .from('game_sessions')
+                            .update({
+                                status: 'active',
+                                state: { ...boardState, color2: selectedColor }
+                            })
+                            .eq('id', gameCode);
+                    }
 
                     // Save to My Games
-                    saveGameToMyGames(gameCode, data.player1, gameState.gridSize);
-                } else if (savedName === data.player1) {
+                    saveGameToMyGames(gameCode, player1Name, gameState.gridSize);
+                } else if (savedName === player1Name || currentPlayerId === player1Data?.player_id) {
                     gameState.myPlayer = 1;
                     // Update My Games with opponent
-                    if (data.player2) {
-                        updateGameOpponent(gameCode, data.player2);
+                    if (player2Name) {
+                        updateGameOpponent(gameCode, player2Name);
                     }
-                } else if (savedName === data.player2 || data.player2) {
+                } else if (player2Data && (savedName === player2Name || currentPlayerId === player2Data?.player_id)) {
                     gameState.myPlayer = 2;
-                    saveGameToMyGames(gameCode, data.player1, gameState.gridSize);
+                    saveGameToMyGames(gameCode, player1Name, gameState.gridSize);
                 }
 
                 showGameScreen();
@@ -1174,32 +1765,58 @@
 
         // Subscribe to real-time updates
         function subscribeToGame(gameCode) {
+            // Subscribe to game_sessions changes
             supabaseClient
                 .channel(`game-${gameCode}`)
                 .on('postgres_changes',
-                    { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameCode}` },
-                    (payload) => {
-                        const data = payload.new;
-                        const boardState = data.board_state || {};
+                    { event: 'UPDATE', schema: 'public', table: 'game_sessions', filter: `id=eq.${gameCode}` },
+                    async (payload) => {
+                        const session = payload.new;
+                        const boardState = session.state || {};
 
                         gameState.lines = boardState.lines || {};
                         gameState.boxes = boardState.boxes || {};
-                        gameState.currentTurn = data.current_turn;
-                        gameState.player1 = data.player1;
-                        gameState.player2 = data.player2;
+                        gameState.currentTurn = session.current_turn;
                         gameState.color1 = boardState.color1 || gameState.color1;
                         gameState.color2 = boardState.color2 || gameState.color2;
-                        gameState.score1 = data.score1;
-                        gameState.score2 = data.score2;
-
-                        // Update My Games if opponent joined
-                        if (data.player2 && gameState.myPlayer === 1) {
-                            updateGameOpponent(gameCode, data.player2);
-                        }
+                        gameState.gameOver = session.status === 'completed';
 
                         updateDisplay();
                         drawBoard();
                         checkGameOver();
+                    }
+                )
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'session_players', filter: `session_id=eq.${gameCode}` },
+                    async (payload) => {
+                        // Refetch players when session_players changes
+                        const { data: sessionPlayers } = await supabaseClient
+                            .from('session_players')
+                            .select('*, players(display_name)')
+                            .eq('session_id', gameCode);
+
+                        const player1Data = sessionPlayers?.find(p => p.player_number === 1);
+                        const player2Data = sessionPlayers?.find(p => p.player_number === 2);
+
+                        if (player1Data) {
+                            gameState.player1 = player1Data.players?.display_name || 'Player 1';
+                            gameState.score1 = player1Data.score || 0;
+                            gameState.color1 = player1Data.color || gameState.color1;
+                        }
+
+                        if (player2Data) {
+                            gameState.player2 = player2Data.players?.display_name || 'Player 2';
+                            gameState.score2 = player2Data.score || 0;
+                            gameState.color2 = player2Data.color || gameState.color2;
+
+                            // Update My Games if opponent joined
+                            if (gameState.myPlayer === 1) {
+                                updateGameOpponent(gameCode, gameState.player2);
+                            }
+                        }
+
+                        updateDisplay();
+                        drawBoard();
                     }
                 )
                 .subscribe();
@@ -1603,10 +2220,11 @@
             if (!gameState.id || !supabaseClient) return;
 
             try {
+                // Update game_sessions
                 await supabaseClient
-                    .from('games')
+                    .from('game_sessions')
                     .update({
-                        board_state: {
+                        state: {
                             gridSize: gameState.gridSize,
                             lines: gameState.lines,
                             boxes: gameState.boxes,
@@ -1614,10 +2232,23 @@
                             color2: gameState.color2
                         },
                         current_turn: gameState.currentTurn,
-                        score1: gameState.score1,
-                        score2: gameState.score2
+                        status: gameState.gameOver ? 'completed' : 'active'
                     })
                     .eq('id', gameState.id);
+
+                // Update session_players scores
+                await supabaseClient
+                    .from('session_players')
+                    .update({ score: gameState.score1 })
+                    .eq('session_id', gameState.id)
+                    .eq('player_number', 1);
+
+                await supabaseClient
+                    .from('session_players')
+                    .update({ score: gameState.score2 })
+                    .eq('session_id', gameState.id)
+                    .eq('player_number', 2);
+
             } catch (err) {
                 console.error('Error syncing to Supabase:', err);
             }

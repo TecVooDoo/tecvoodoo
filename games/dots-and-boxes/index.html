@@ -1272,7 +1272,6 @@
                     if (sessionError) {
                         console.error('Error fetching games:', sessionError);
                     }
-                    console.log('My games data:', sessionData);
 
                     if (sessionData) {
                         // For each game, get opponent info
@@ -1300,8 +1299,8 @@
                 }
             }
 
-            // Fall back to localStorage if not logged in or no db games
-            if (games.length === 0) {
+            // Only use localStorage if NOT logged in
+            if (!currentPlayerId) {
                 games = JSON.parse(localStorage.getItem('dotsMyGames') || '[]');
             }
 

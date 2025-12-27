@@ -1357,7 +1357,36 @@
             }
         }
 
-        function removeGame(gameId) {
+        async function removeGame(gameId) {
+            // If logged in, remove from database (delete session_players entry for this user)
+            if (currentPlayerId && supabaseClient) {
+                try {
+                    // Remove the player's participation in the game
+                    await supabaseClient
+                        .from('session_players')
+                        .delete()
+                        .eq('session_id', gameId)
+                        .eq('player_id', currentPlayerId);
+
+                    // Check if any players remain in the game
+                    const { data: remainingPlayers } = await supabaseClient
+                        .from('session_players')
+                        .select('id')
+                        .eq('session_id', gameId);
+
+                    // If no players left, delete the game session too
+                    if (!remainingPlayers || remainingPlayers.length === 0) {
+                        await supabaseClient
+                            .from('game_sessions')
+                            .delete()
+                            .eq('session_id', gameId);
+                    }
+                } catch (err) {
+                    console.error('Error removing game from database:', err);
+                }
+            }
+
+            // Also remove from localStorage
             let games = JSON.parse(localStorage.getItem('dotsMyGames') || '[]');
             games = games.filter(g => g.id !== gameId);
             localStorage.setItem('dotsMyGames', JSON.stringify(games));

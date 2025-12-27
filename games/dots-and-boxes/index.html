@@ -1252,12 +1252,12 @@
             // If logged in, fetch games from database
             if (currentPlayerId && supabaseClient) {
                 try {
-                    const { data: sessionData } = await supabaseClient
+                    const { data: sessionData, error: sessionError } = await supabaseClient
                         .from('session_players')
                         .select(`
                             session_id,
                             player_number,
-                            game_sessions (
+                            game_sessions!inner (
                                 id,
                                 status,
                                 state,
@@ -1268,6 +1268,11 @@
                         .eq('game_sessions.game_type', 'dots-and-boxes')
                         .order('joined_at', { ascending: false })
                         .limit(10);
+
+                    if (sessionError) {
+                        console.error('Error fetching games:', sessionError);
+                    }
+                    console.log('My games data:', sessionData);
 
                     if (sessionData) {
                         // For each game, get opponent info

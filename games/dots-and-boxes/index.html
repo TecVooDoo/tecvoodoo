@@ -970,12 +970,12 @@
         async function ensurePlayerRecord() {
             if (!supabaseClient || !currentUser) return null;
 
-            // Check if player record exists
+            // Check if player record exists (use maybeSingle to avoid 406 error for new users)
             const { data: existingPlayer } = await supabaseClient
                 .from('players')
                 .select('id')
                 .eq('auth_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             if (existingPlayer) {
                 return existingPlayer.id;

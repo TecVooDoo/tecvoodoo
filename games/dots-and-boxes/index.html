@@ -1371,7 +1371,7 @@
                     // Check if any players remain in the game
                     const { data: remainingPlayers } = await supabaseClient
                         .from('session_players')
-                        .select('id')
+                        .select('player_id')
                         .eq('session_id', gameId);
 
                     // If no players left, delete the game session too
@@ -1379,7 +1379,7 @@
                         await supabaseClient
                             .from('game_sessions')
                             .delete()
-                            .eq('session_id', gameId);
+                            .eq('id', gameId);
                     }
                 } catch (err) {
                     console.error('Error removing game from database:', err);

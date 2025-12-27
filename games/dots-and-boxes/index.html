@@ -1274,13 +1274,13 @@
                         for (const sp of sessionData) {
                             if (!sp.game_sessions) continue;
 
-                            // Get opponent
+                            // Get opponent (use maybeSingle to avoid error when no opponent yet)
                             const { data: opponentData } = await supabaseClient
                                 .from('session_players')
                                 .select('players(display_name)')
                                 .eq('session_id', sp.session_id)
                                 .neq('player_id', currentPlayerId)
-                                .single();
+                                .maybeSingle();
 
                             games.push({
                                 id: sp.session_id,

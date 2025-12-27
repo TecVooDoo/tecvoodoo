@@ -685,7 +685,7 @@
             <div class="setup-options" style="margin-top: 2rem;">
                 <div class="setup-option" onclick="showLocalSetup()">
                     <h3>Local Game</h3>
-                    <p>Play against a friend on this device, taking turns</p>
+                    <p>Play against a friend on this device, taking turns (not saved)</p>
                 </div>
                 <div class="setup-option" onclick="showOnlineOptions()">
                     <h3>Online Game</h3>
@@ -865,6 +865,9 @@
                 return;
             }
 
+            // Clear any stale session first to prevent sign-in issues
+            await supabaseClient.auth.signOut({ scope: 'local' });
+
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -882,6 +885,9 @@
                 showAuthMessage('Online features not available', true);
                 return;
             }
+
+            // Clear any stale session first to prevent sign-in issues
+            await supabaseClient.auth.signOut({ scope: 'local' });
 
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'facebook',
@@ -939,10 +945,22 @@
         async function signOut() {
             if (!supabaseClient) return;
 
-            await supabaseClient.auth.signOut();
+            try {
+                // Use scope: 'local' to only clear this browser's session
+                // This prevents issues with stale global state
+                const { error } = await supabaseClient.auth.signOut({ scope: 'local' });
+                if (error) {
+                    console.error('Sign out error:', error);
+                }
+            } catch (err) {
+                console.error('Sign out exception:', err);
+            }
+
+            // Force clear our local state
             currentUser = null;
             currentPlayerId = null;
             updateAuthUI();
+            loadMyGames();
         }
 
         function updateAuthUI() {
@@ -1009,17 +1027,10 @@
         async function initAuth() {
             if (!supabaseClient) return;
 
-            // Get current session
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                currentUser = session.user;
-                currentPlayerId = await ensurePlayerRecord();
-                updateAuthUI();
-            }
-
-            // Listen for auth changes
+            // Listen for auth changes FIRST (before getSession)
+            // This ensures we catch the SIGNED_IN event from OAuth redirects
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                console.log('Auth state changed:', event);
+                console.log('Auth state changed:', event, session?.user?.email);
                 if (session) {
                     currentUser = session.user;
                     currentPlayerId = await ensurePlayerRecord();
@@ -1033,6 +1044,23 @@
                 // Reload My Games when auth changes
                 loadMyGames();
             });
+
+            // Get current session (handles page refresh when already logged in)
+            try {
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                if (error) {
+                    console.error('Error getting session:', error);
+                }
+                if (session) {
+                    console.log('Existing session found:', session.user?.email);
+                    currentUser = session.user;
+                    currentPlayerId = await ensurePlayerRecord();
+                    updateAuthUI();
+                    loadMyGames();
+                }
+            } catch (err) {
+                console.error('Exception getting session:', err);
+            }
         }
 
         // Available colors
@@ -1591,15 +1619,6 @@
                 const player1Data = sessionPlayers?.find(p => p.player_number === 1);
                 const player2Data = sessionPlayers?.find(p => p.player_number === 2);
 
-                // Check if game is already full (2 players)
-                const playerCount = sessionPlayers?.length || 0;
-                const isExistingPlayer = currentPlayerId && sessionPlayers?.some(p => p.player_id === currentPlayerId);
-
-                if (playerCount >= 2 && !isExistingPlayer) {
-                    alert('This game is full. Two players have already joined.');
-                    return;
-                }
-
                 const boardState = session.state || { gridSize: 3, lines: {}, boxes: {} };
                 const player1Name = player1Data?.players?.display_name || 'Player 1';
                 const player2Name = player2Data?.players?.display_name || null;
@@ -1713,15 +1732,6 @@
 
                 const player1Data = sessionPlayers?.find(p => p.player_number === 1);
                 const player2Data = sessionPlayers?.find(p => p.player_number === 2);
-
-                // Check if game is already full (2 players) and user is trying to join as new player
-                const playerCount = sessionPlayers?.length || 0;
-                const isExistingPlayer = currentPlayerId && sessionPlayers?.some(p => p.player_id === currentPlayerId);
-
-                if (joinAsPlayer2 && playerCount >= 2 && !isExistingPlayer) {
-                    alert('This game is full. Two players have already joined.');
-                    return;
-                }
 
                 const boardState = session.state || { gridSize: 3, lines: {}, boxes: {} };
                 const player1Name = player1Data?.players?.display_name || 'Player 1';

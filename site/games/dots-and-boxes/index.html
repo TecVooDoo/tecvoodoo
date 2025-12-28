@@ -865,13 +865,18 @@
                 return;
             }
 
-            // Clear any stale session first to prevent sign-in issues
-            await supabaseClient.auth.signOut({ scope: 'local' });
+            // Clear local state before redirect
+            currentUser = null;
+            currentPlayerId = null;
+            updateAuthUI();
 
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.href.split('?')[0]
+                    redirectTo: window.location.href.split('?')[0],
+                    queryParams: {
+                        prompt: 'select_account' // Force account selection to avoid auto-login with wrong account
+                    }
                 }
             });
 
@@ -886,8 +891,10 @@
                 return;
             }
 
-            // Clear any stale session first to prevent sign-in issues
-            await supabaseClient.auth.signOut({ scope: 'local' });
+            // Clear local state before redirect
+            currentUser = null;
+            currentPlayerId = null;
+            updateAuthUI();
 
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'facebook',
@@ -945,21 +952,24 @@
         async function signOut() {
             if (!supabaseClient) return;
 
+            // Force clear our local state FIRST
+            currentUser = null;
+            currentPlayerId = null;
+            updateAuthUI();
+
             try {
-                // Use scope: 'local' to only clear this browser's session
-                // This prevents issues with stale global state
-                const { error } = await supabaseClient.auth.signOut({ scope: 'local' });
+                // Use scope: 'global' to ensure all sessions are cleared
+                // This prevents issues where OAuth providers retain stale tokens
+                const { error } = await supabaseClient.auth.signOut({ scope: 'global' });
                 if (error) {
                     console.error('Sign out error:', error);
+                    // Even if there's an error, we've already cleared local state
                 }
             } catch (err) {
                 console.error('Sign out exception:', err);
             }
 
-            // Force clear our local state
-            currentUser = null;
-            currentPlayerId = null;
-            updateAuthUI();
+            // Reload My Games to show localStorage games instead
             loadMyGames();
         }
 
@@ -1027,39 +1037,54 @@
         async function initAuth() {
             if (!supabaseClient) return;
 
-            // Listen for auth changes FIRST (before getSession)
+            // Listen for auth changes FIRST (before getUser)
             // This ensures we catch the SIGNED_IN event from OAuth redirects
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
                 console.log('Auth state changed:', event, session?.user?.email);
-                if (session) {
-                    currentUser = session.user;
-                    currentPlayerId = await ensurePlayerRecord();
-                    hideAuthModal();
-                } else {
+
+                // Handle specific events
+                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                    if (session) {
+                        currentUser = session.user;
+                        currentPlayerId = await ensurePlayerRecord();
+                        hideAuthModal();
+                        updateAuthUI();
+                        loadMyGames();
+                    }
+                } else if (event === 'SIGNED_OUT') {
                     currentUser = null;
                     currentPlayerId = null;
-                }
-                updateAuthUI();
-
-                // Reload My Games when auth changes
-                loadMyGames();
-            });
-
-            // Get current session (handles page refresh when already logged in)
-            try {
-                const { data: { session }, error } = await supabaseClient.auth.getSession();
-                if (error) {
-                    console.error('Error getting session:', error);
-                }
-                if (session) {
-                    console.log('Existing session found:', session.user?.email);
-                    currentUser = session.user;
-                    currentPlayerId = await ensurePlayerRecord();
                     updateAuthUI();
                     loadMyGames();
+                } else if (event === 'INITIAL_SESSION') {
+                    // Initial page load - session from storage
+                    if (session) {
+                        currentUser = session.user;
+                        currentPlayerId = await ensurePlayerRecord();
+                        updateAuthUI();
+                        loadMyGames();
+                    }
                 }
+            });
+
+            // Use getUser() instead of getSession() for initial check
+            // getUser() always makes a fresh server call, while getSession() can return stale cached data
+            try {
+                const { data: { user }, error } = await supabaseClient.auth.getUser();
+                if (error) {
+                    // User not authenticated or token invalid - this is expected for guests
+                    console.log('No authenticated user:', error.message);
+                    currentUser = null;
+                    currentPlayerId = null;
+                } else if (user) {
+                    console.log('Authenticated user found:', user.email);
+                    currentUser = user;
+                    currentPlayerId = await ensurePlayerRecord();
+                }
+                updateAuthUI();
+                loadMyGames();
             } catch (err) {
-                console.error('Exception getting session:', err);
+                console.error('Exception getting user:', err);
             }
         }
 

@@ -801,6 +801,7 @@
         }
 
         function updateAuthUI() {
+            console.log('updateAuthUI called, currentUser:', currentUser?.email);
             const signedOutEl = document.getElementById('auth-signed-out');
             const signedInEl = document.getElementById('auth-signed-in');
             const userEmailEl = document.getElementById('user-email');
@@ -915,56 +916,82 @@
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
                 console.log('Auth state changed:', event, session?.user?.email);
 
-                // Handle specific events
-                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                    if (session) {
-                        currentUser = session.user;
-                        currentPlayerId = await ensurePlayerRecord();
-                        hideAuthModal();
+                try {
+                    // Handle specific events
+                    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                        if (session) {
+                            console.log('SIGNED_IN: Setting currentUser...');
+                            currentUser = session.user;
+                            console.log('SIGNED_IN: currentUser set, calling ensurePlayerRecord...');
+                            currentPlayerId = await ensurePlayerRecord();
+                            console.log('SIGNED_IN: ensurePlayerRecord done, playerId:', currentPlayerId);
+                            hideAuthModal();
+                            console.log('SIGNED_IN: Calling updateAuthUI...');
+                            updateAuthUI();
+                            console.log('SIGNED_IN: updateAuthUI done');
+                            loadMyGames();
+                            // Clean up the URL hash if present
+                            if (window.location.hash.includes('access_token')) {
+                                window.history.replaceState(null, '', window.location.pathname);
+                            }
+                        }
+                    } else if (event === 'SIGNED_OUT') {
+                        currentUser = null;
+                        currentPlayerId = null;
                         updateAuthUI();
                         loadMyGames();
-                        // Clean up the URL hash if present
-                        if (window.location.hash.includes('access_token')) {
-                            window.history.replaceState(null, '', window.location.pathname);
+                    } else if (event === 'INITIAL_SESSION') {
+                        // Initial page load - only update if session exists
+                        // Don't clear user on null session - let getUser() handle initial state
+                        if (session) {
+                            console.log('INITIAL_SESSION: Setting currentUser...');
+                            currentUser = session.user;
+                            console.log('INITIAL_SESSION: currentUser set, calling ensurePlayerRecord...');
+                            currentPlayerId = await ensurePlayerRecord();
+                            console.log('INITIAL_SESSION: ensurePlayerRecord done, playerId:', currentPlayerId);
+                            console.log('INITIAL_SESSION: Calling updateAuthUI...');
+                            updateAuthUI();
+                            console.log('INITIAL_SESSION: updateAuthUI done');
+                            loadMyGames();
                         }
                     }
-                } else if (event === 'SIGNED_OUT') {
-                    currentUser = null;
-                    currentPlayerId = null;
-                    updateAuthUI();
-                    loadMyGames();
-                } else if (event === 'INITIAL_SESSION') {
-                    // Initial page load - only update if session exists
-                    // Don't clear user on null session - let getUser() handle initial state
-                    if (session) {
-                        currentUser = session.user;
-                        currentPlayerId = await ensurePlayerRecord();
-                        updateAuthUI();
-                        loadMyGames();
-                    }
+                } catch (err) {
+                    console.error('Error in onAuthStateChange handler:', err);
                 }
             });
+            console.log('onAuthStateChange listener registered');
 
-            // Check current session - use getSession first (local/fast), then validate with getUser
+            // Check current session - use getUser() for fresh server state
+            // BUT only if onAuthStateChange hasn't already set a user
             try {
-                // First try getSession which reads from localStorage (fast, no network)
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (session?.user) {
-                    console.log('Session found:', session.user.email);
-                    currentUser = session.user;
+                console.log('Calling getUser()... currentUser is:', currentUser?.email);
+                const { data: { user }, error } = await supabaseClient.auth.getUser();
+                console.log('getUser() result:', { user: user?.email, error: error?.message });
+
+                if (!error && user) {
+                    console.log('User found from getUser():', user.email);
+                    currentUser = user;
                     currentPlayerId = await ensurePlayerRecord();
                     updateAuthUI();
                     loadMyGames();
+                } else if (currentUser) {
+                    // getUser() failed but onAuthStateChange already set a user - keep it
+                    console.log('getUser() failed but already have user from onAuthStateChange:', currentUser.email);
+                    // Don't call updateAuthUI - it was already called by onAuthStateChange
                 } else {
-                    // No local session, update UI to show signed out
+                    // No valid session from either source
+                    console.log('No user found, error:', error?.message);
                     updateAuthUI();
                     loadMyGames();
                 }
             } catch (err) {
-                console.error('Error getting session:', err);
-                updateAuthUI();
-                loadMyGames();
+                console.error('Error getting user:', err);
+                if (!currentUser) {
+                    updateAuthUI();
+                    loadMyGames();
+                }
             }
+            console.log('initAuth() completed, currentUser:', currentUser?.email);
         }
 
         // Available colors

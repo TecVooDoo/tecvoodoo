@@ -2750,7 +2750,9 @@
             }
 
             const gameLink = document.getElementById('share-link').value;
-            const gameCode = gameState.gameCode;
+            // Extract game code from the share link URL
+            const urlParams = new URL(gameLink).searchParams;
+            const gameCode = urlParams.get('game');
             const playerName = gameState.player1 || 'Someone';
 
             const sendBtn = document.querySelector('#email-invite-form button');

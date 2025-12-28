@@ -167,15 +167,29 @@
 
         const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function checkAuth() {
-            const { data: { session } } = await sbClient.auth.getSession();
-            updateUI(session);
-        }
-
+        // Listen for auth changes FIRST
         sbClient.auth.onAuthStateChange((event, session) => {
-            console.log('Auth event:', event);
-            updateUI(session);
+            console.log('Auth event:', event, session?.user?.email);
+
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+                updateUI(session);
+            } else if (event === 'SIGNED_OUT') {
+                updateUI(null);
+            }
         });
+
+        async function checkAuth() {
+            // Use getUser() instead of getSession() - getUser() always makes a fresh server call
+            const { data: { user }, error } = await sbClient.auth.getUser();
+            if (error || !user) {
+                console.log('No authenticated user');
+                updateUI(null);
+            } else {
+                // Get session for display purposes
+                const { data: { session } } = await sbClient.auth.getSession();
+                updateUI(session);
+            }
+        }
 
         function updateUI(session) {
             const loggedOutView = document.getElementById('logged-out-view');
@@ -200,7 +214,10 @@
             const { error } = await sbClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.href
+                    redirectTo: window.location.href.split('?')[0],
+                    queryParams: {
+                        prompt: 'select_account' // Force account selection
+                    }
                 }
             });
             if (error) showStatus('status-out', error.message, 'error');
@@ -211,7 +228,7 @@
             const { error } = await sbClient.auth.signInWithOAuth({
                 provider: 'facebook',
                 options: {
-                    redirectTo: window.location.href
+                    redirectTo: window.location.href.split('?')[0]
                 }
             });
             if (error) showStatus('status-out', error.message, 'error');
@@ -246,9 +263,14 @@
         }
 
         async function signOut() {
-            const { error } = await sbClient.auth.signOut();
+            // Update UI immediately
+            updateUI(null);
+
+            // Sign out with global scope to clear all sessions
+            const { error } = await sbClient.auth.signOut({ scope: 'global' });
             if (error) {
-                showStatus('status-in', error.message, 'error');
+                console.error('Sign out error:', error);
+                showStatus('status-out', 'Signed out (with warning: ' + error.message + ')', 'info');
             } else {
                 showStatus('status-out', 'Signed out successfully', 'success');
             }

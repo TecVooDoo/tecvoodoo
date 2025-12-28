@@ -165,7 +165,42 @@
         const SUPABASE_URL = 'https://eenuxdjmsibcfhzgtslx.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_zwOfLO5ByeqZGS4iZdOw7A_sAlwaA_3';
 
-        const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: {
+                detectSessionInUrl: true,
+                flowType: 'implicit',
+                autoRefreshToken: true,
+                persistSession: true
+            }
+        });
+
+        // Check if URL has OAuth tokens that need to be processed
+        async function handleOAuthRedirect() {
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                console.log('OAuth tokens detected in URL hash, processing...');
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+
+                if (accessToken) {
+                    try {
+                        const { data, error } = await sbClient.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken || ''
+                        });
+                        if (error) {
+                            console.error('Error setting session from URL tokens:', error);
+                        } else {
+                            console.log('Session set successfully from URL tokens');
+                            window.history.replaceState(null, '', window.location.pathname);
+                        }
+                    } catch (err) {
+                        console.error('Exception setting session:', err);
+                    }
+                }
+            }
+        }
 
         // Listen for auth changes FIRST
         sbClient.auth.onAuthStateChange((event, session) => {
@@ -173,12 +208,19 @@
 
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
                 updateUI(session);
+                // Clean up URL hash if present
+                if (window.location.hash.includes('access_token')) {
+                    window.history.replaceState(null, '', window.location.pathname);
+                }
             } else if (event === 'SIGNED_OUT') {
                 updateUI(null);
             }
         });
 
         async function checkAuth() {
+            // First check for OAuth redirect tokens
+            await handleOAuthRedirect();
+
             // Use getUser() instead of getSession() - getUser() always makes a fresh server call
             const { data: { user }, error } = await sbClient.auth.getUser();
             if (error || !user) {

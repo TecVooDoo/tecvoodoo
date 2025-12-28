@@ -501,14 +501,44 @@
                 </div>
             </div>
 
-            <div class="setup-options" style="margin-top: 2rem;">
+            <!-- Step 2: Player Count Selection -->
+            <div id="player-count-selection" class="setup-options" style="margin-top: 2rem;">
+                <h3 style="color: var(--text-secondary); margin-bottom: 1rem; text-align: center;">How many players?</h3>
+                <div class="setup-option" onclick="select1Player()">
+                    <h3>1 Player</h3>
+                    <p>Play against The Executioner AI</p>
+                </div>
+                <div class="setup-option" onclick="select2Players()">
+                    <h3>2 Players</h3>
+                    <p>Play against another person</p>
+                </div>
+            </div>
+
+            <!-- Step 3a: 1-Player Options (AI) -->
+            <div id="ai-options" class="hidden" style="margin-top: 1.5rem;">
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid #333;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Difficulty</h3>
+                    <div class="grid-sizes" id="difficulty-options">
+                        <button data-difficulty="easy">Easy</button>
+                        <button data-difficulty="normal" class="selected">Normal</button>
+                        <button data-difficulty="hard">Hard</button>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.75rem; text-align: center;">
+                        The Executioner adapts to your skill level
+                    </p>
+                    <button class="btn btn-primary start-button" onclick="startAIGame()">Play vs The Executioner</button>
+                </div>
+            </div>
+
+            <!-- Step 3b: 2-Player Options -->
+            <div id="two-player-options" class="setup-options hidden" style="margin-top: 1.5rem;">
                 <div class="setup-option" onclick="showLocalSetup()">
                     <h3>Local Game</h3>
-                    <p>Play against a friend on this device, taking turns (not saved)</p>
+                    <p>Play on this device, taking turns (not saved)</p>
                 </div>
                 <div class="setup-option" onclick="showOnlineOptions()">
                     <h3>Online Game</h3>
-                    <p>Play against a friend by sharing a link</p>
+                    <p>Play by sharing a link</p>
                 </div>
             </div>
 
@@ -634,7 +664,7 @@
             <a href="mailto:updates+subscribe@tecvoodoo.com?subject=Subscribe&body=Send this email to subscribe to TecVooDoo Updates." class="btn btn-outline">Subscribe</a>
         </div>
         <p>&copy; 2025 TecVooDoo LLC. All rights reserved.</p>
-        <span class="footer-updated">Updated: Dec 28, 2025</span>
+        <span class="footer-updated">Updated: Dec 28, 2025 - The Executioner AI added</span>
     </footer>
 
     <!-- Supabase JS -->
@@ -1051,9 +1081,486 @@
             score1: 0,
             score2: 0,
             isOnline: false,
+            isVsAI: false,
             myPlayer: 1,
             gameOver: false
         };
+
+        // ============================================================
+        // THE EXECUTIONER AI SYSTEM
+        // Ported from DLYH Unity implementation for TecVooDoo games
+        // ============================================================
+
+        const ExecutionerConfig = {
+            // Skill level bounds
+            minSkillLevel: 0.25,
+            maxSkillLevel: 0.95,
+            skillAdjustmentStep: 0.10,
+
+            // Initial skill by difficulty (these are for the AI, inverted from player choice)
+            easyStartSkill: 0.25,
+            normalStartSkill: 0.50,
+            hardStartSkill: 0.75,
+
+            // Rubber-banding thresholds by difficulty
+            // Easy = player chose easy, so AI plays hard (fewer boxes to increase)
+            easy: { boxesToIncrease: 2, boxesToDecrease: 4 },
+            normal: { boxesToIncrease: 3, boxesToDecrease: 3 },
+            hard: { boxesToIncrease: 4, boxesToDecrease: 2 },
+
+            // Adaptive threshold settings
+            consecutiveAdjustmentsToAdapt: 2,
+            minBoxesToIncrease: 1,
+            maxBoxesToIncrease: 5,
+            minBoxesToDecrease: 1,
+            maxBoxesToDecrease: 5,
+
+            // Think time (milliseconds)
+            minThinkTime: 800,
+            maxThinkTime: 2500,
+
+            // How many recent player moves to track
+            recentMovesToTrack: 6
+        };
+
+        // Difficulty adapter for rubber-banding
+        class DifficultyAdapter {
+            constructor(playerDifficulty) {
+                this.config = ExecutionerConfig;
+                this.playerDifficulty = playerDifficulty;
+
+                // Invert difficulty: Player Easy = AI Hard
+                this.aiDifficulty = this.invertDifficulty(playerDifficulty);
+
+                // Initialize based on AI difficulty
+                this.currentSkill = this.getStartSkill();
+                this.boxesToIncrease = this.getInitialBoxesToIncrease();
+                this.boxesToDecrease = this.getInitialBoxesToDecrease();
+
+                // Tracking
+                this.recentPlayerCaptures = []; // true = captured box, false = no capture
+                this.consecutiveIncreases = 0;
+                this.consecutiveDecreases = 0;
+
+                console.log('[Executioner] DifficultyAdapter initialized:', {
+                    playerDifficulty,
+                    aiDifficulty: this.aiDifficulty,
+                    skill: this.currentSkill,
+                    boxesToIncrease: this.boxesToIncrease,
+                    boxesToDecrease: this.boxesToDecrease
+                });
+            }
+
+            invertDifficulty(playerDiff) {
+                if (playerDiff === 'easy') return 'hard';
+                if (playerDiff === 'hard') return 'easy';
+                return 'normal';
+            }
+
+            getStartSkill() {
+                switch (this.aiDifficulty) {
+                    case 'easy': return this.config.easyStartSkill;
+                    case 'hard': return this.config.hardStartSkill;
+                    default: return this.config.normalStartSkill;
+                }
+            }
+
+            getInitialBoxesToIncrease() {
+                return this.config[this.aiDifficulty].boxesToIncrease;
+            }
+
+            getInitialBoxesToDecrease() {
+                return this.config[this.aiDifficulty].boxesToDecrease;
+            }
+
+            recordPlayerMove(capturedBox) {
+                this.recentPlayerCaptures.push(capturedBox);
+
+                // Trim to max size
+                while (this.recentPlayerCaptures.length > this.config.recentMovesToTrack) {
+                    this.recentPlayerCaptures.shift();
+                }
+
+                // Count consecutive captures/non-captures from end
+                const consecutiveCaptures = this.countTrailing(true);
+                const consecutiveNonCaptures = this.countTrailing(false);
+
+                if (consecutiveCaptures >= this.boxesToIncrease) {
+                    this.increaseSkill();
+                } else if (consecutiveNonCaptures >= this.boxesToDecrease) {
+                    this.decreaseSkill();
+                }
+            }
+
+            countTrailing(value) {
+                let count = 0;
+                for (let i = this.recentPlayerCaptures.length - 1; i >= 0; i--) {
+                    if (this.recentPlayerCaptures[i] === value) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+                return count;
+            }
+
+            increaseSkill() {
+                const oldSkill = this.currentSkill;
+                this.currentSkill = Math.min(
+                    this.config.maxSkillLevel,
+                    this.currentSkill + this.config.skillAdjustmentStep
+                );
+
+                this.consecutiveIncreases++;
+                this.consecutiveDecreases = 0;
+
+                console.log('[Executioner] AI skill INCREASED:', oldSkill.toFixed(2), '->', this.currentSkill.toFixed(2));
+
+                if (this.consecutiveIncreases >= this.config.consecutiveAdjustmentsToAdapt) {
+                    this.adaptForDominatingPlayer();
+                }
+
+                this.recentPlayerCaptures = [];
+            }
+
+            decreaseSkill() {
+                const oldSkill = this.currentSkill;
+                this.currentSkill = Math.max(
+                    this.config.minSkillLevel,
+                    this.currentSkill - this.config.skillAdjustmentStep
+                );
+
+                this.consecutiveDecreases++;
+                this.consecutiveIncreases = 0;
+
+                console.log('[Executioner] AI skill DECREASED:', oldSkill.toFixed(2), '->', this.currentSkill.toFixed(2));
+
+                if (this.consecutiveDecreases >= this.config.consecutiveAdjustmentsToAdapt) {
+                    this.adaptForStrugglingPlayer();
+                }
+
+                this.recentPlayerCaptures = [];
+            }
+
+            adaptForDominatingPlayer() {
+                // Make it easier for AI to increase (fewer boxes needed)
+                this.boxesToIncrease = Math.max(this.config.minBoxesToIncrease, this.boxesToIncrease - 1);
+                // Make it harder for AI to decrease
+                this.boxesToDecrease = Math.min(this.config.maxBoxesToDecrease, this.boxesToDecrease + 1);
+
+                console.log('[Executioner] Thresholds adapted (player dominating):', {
+                    boxesToIncrease: this.boxesToIncrease,
+                    boxesToDecrease: this.boxesToDecrease
+                });
+
+                this.consecutiveIncreases = 0;
+            }
+
+            adaptForStrugglingPlayer() {
+                // Make it harder for AI to increase
+                this.boxesToIncrease = Math.min(this.config.maxBoxesToIncrease, this.boxesToIncrease + 1);
+                // Make it easier for AI to decrease
+                this.boxesToDecrease = Math.max(this.config.minBoxesToDecrease, this.boxesToDecrease - 1);
+
+                console.log('[Executioner] Thresholds adapted (player struggling):', {
+                    boxesToIncrease: this.boxesToIncrease,
+                    boxesToDecrease: this.boxesToDecrease
+                });
+
+                this.consecutiveDecreases = 0;
+            }
+
+            reset() {
+                this.currentSkill = this.getStartSkill();
+                this.boxesToIncrease = this.getInitialBoxesToIncrease();
+                this.boxesToDecrease = this.getInitialBoxesToDecrease();
+                this.recentPlayerCaptures = [];
+                this.consecutiveIncreases = 0;
+                this.consecutiveDecreases = 0;
+            }
+        }
+
+        // The Executioner AI - Main controller
+        class ExecutionerAI {
+            constructor() {
+                this.difficultyAdapter = null;
+                this.isThinking = false;
+                this.isInitialized = false;
+            }
+
+            initialize(playerDifficulty) {
+                this.difficultyAdapter = new DifficultyAdapter(playerDifficulty);
+                this.isInitialized = true;
+                this.isThinking = false;
+                console.log('[Executioner] AI initialized for difficulty:', playerDifficulty);
+            }
+
+            reset() {
+                if (this.difficultyAdapter) {
+                    this.difficultyAdapter.reset();
+                }
+                this.isThinking = false;
+            }
+
+            get currentSkill() {
+                return this.difficultyAdapter ? this.difficultyAdapter.currentSkill : 0.5;
+            }
+
+            recordPlayerMove(capturedBox) {
+                if (this.difficultyAdapter) {
+                    this.difficultyAdapter.recordPlayerMove(capturedBox);
+                }
+            }
+
+            getRandomThinkTime() {
+                const min = ExecutionerConfig.minThinkTime;
+                const max = ExecutionerConfig.maxThinkTime;
+                return min + Math.random() * (max - min);
+            }
+
+            // Execute AI turn with think time delay
+            async executeTurn() {
+                if (!this.isInitialized || this.isThinking) return;
+                if (gameState.gameOver) return;
+                if (gameState.currentTurn !== 2) return; // AI is always player 2
+
+                this.isThinking = true;
+                updateStatusMessage('The Executioner is thinking...');
+
+                // Think time delay
+                const thinkTime = this.getRandomThinkTime();
+                await new Promise(resolve => setTimeout(resolve, thinkTime));
+
+                if (gameState.gameOver || gameState.currentTurn !== 2) {
+                    this.isThinking = false;
+                    return;
+                }
+
+                // Get best move
+                const move = this.decideMove();
+
+                if (move) {
+                    // Execute the move
+                    await drawLine(move);
+                }
+
+                this.isThinking = false;
+
+                // If AI captured a box and still has turn, go again
+                if (!gameState.gameOver && gameState.currentTurn === 2 && gameState.isVsAI) {
+                    setTimeout(() => this.executeTurn(), 300);
+                }
+            }
+
+            // Decide which line to draw
+            decideMove() {
+                const skill = this.currentSkill;
+                const availableMoves = this.getAvailableMoves();
+
+                if (availableMoves.length === 0) return null;
+
+                // Categorize moves
+                const capturingMoves = [];   // Moves that complete a box
+                const safeMoves = [];        // Moves that don't give opponent a box
+                const sacrificeMoves = [];   // Moves that give opponent a box
+
+                for (const move of availableMoves) {
+                    const analysis = this.analyzeMove(move);
+
+                    if (analysis.capturesBox) {
+                        capturingMoves.push({ move, analysis });
+                    } else if (analysis.opensChain) {
+                        sacrificeMoves.push({ move, analysis });
+                    } else {
+                        safeMoves.push({ move, analysis });
+                    }
+                }
+
+                // At high skill, use optimal strategy
+                // At low skill, sometimes make suboptimal choices
+
+                // Always take capturing moves if available
+                if (capturingMoves.length > 0) {
+                    // Pick the one that captures most boxes
+                    capturingMoves.sort((a, b) => b.analysis.boxCount - a.analysis.boxCount);
+                    return capturingMoves[0].move;
+                }
+
+                // Safe moves available?
+                if (safeMoves.length > 0) {
+                    // At high skill, pick strategically
+                    // At low skill, pick randomly from pool
+                    if (skill >= 0.7) {
+                        // Prefer moves that limit opponent options
+                        safeMoves.sort((a, b) => a.analysis.opponentBenefit - b.analysis.opponentBenefit);
+                        return safeMoves[0].move;
+                    } else {
+                        // Random from top portion based on skill
+                        const poolSize = Math.max(1, Math.floor(safeMoves.length * (1 - skill)));
+                        const index = Math.floor(Math.random() * Math.min(poolSize, safeMoves.length));
+                        return safeMoves[index].move;
+                    }
+                }
+
+                // Only sacrifice moves left - must give opponent boxes
+                if (sacrificeMoves.length > 0) {
+                    if (skill >= 0.6) {
+                        // Smart sacrifice: give away smallest chain
+                        sacrificeMoves.sort((a, b) => a.analysis.chainSize - b.analysis.chainSize);
+                        return sacrificeMoves[0].move;
+                    } else {
+                        // Random sacrifice
+                        const index = Math.floor(Math.random() * sacrificeMoves.length);
+                        return sacrificeMoves[index].move;
+                    }
+                }
+
+                // Fallback: random move
+                return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            }
+
+            getAvailableMoves() {
+                const moves = [];
+                const n = gameState.gridSize;
+
+                // Horizontal lines
+                for (let row = 0; row <= n; row++) {
+                    for (let col = 0; col < n; col++) {
+                        const key = `h_${row}_${col}`;
+                        if (!gameState.lines[key]) {
+                            moves.push(key);
+                        }
+                    }
+                }
+
+                // Vertical lines
+                for (let row = 0; row < n; row++) {
+                    for (let col = 0; col <= n; col++) {
+                        const key = `v_${row}_${col}`;
+                        if (!gameState.lines[key]) {
+                            moves.push(key);
+                        }
+                    }
+                }
+
+                return moves;
+            }
+
+            analyzeMove(lineKey) {
+                const result = {
+                    capturesBox: false,
+                    boxCount: 0,
+                    opensChain: false,
+                    chainSize: 0,
+                    opponentBenefit: 0
+                };
+
+                // Check if this move completes any boxes
+                const [type, row, col] = lineKey.split('_');
+                const r = parseInt(row);
+                const c = parseInt(col);
+                const n = gameState.gridSize;
+
+                const adjacentBoxes = this.getAdjacentBoxes(lineKey);
+
+                for (const box of adjacentBoxes) {
+                    const sidesDrawn = this.countBoxSides(box.row, box.col);
+
+                    if (sidesDrawn === 3) {
+                        // This move would complete this box
+                        result.capturesBox = true;
+                        result.boxCount++;
+                    } else if (sidesDrawn === 2) {
+                        // This move would give the box 3 sides
+                        // Opponent could complete it next turn
+                        result.opensChain = true;
+                        result.opponentBenefit++;
+
+                        // Count chain size (how many boxes opponent could get)
+                        const chainSize = this.estimateChainSize(box.row, box.col, lineKey);
+                        result.chainSize = Math.max(result.chainSize, chainSize);
+                    }
+                }
+
+                return result;
+            }
+
+            getAdjacentBoxes(lineKey) {
+                const [type, row, col] = lineKey.split('_');
+                const r = parseInt(row);
+                const c = parseInt(col);
+                const n = gameState.gridSize;
+                const boxes = [];
+
+                if (type === 'h') {
+                    // Horizontal line: box above (r-1, c) and below (r, c)
+                    if (r > 0) boxes.push({ row: r - 1, col: c });
+                    if (r < n) boxes.push({ row: r, col: c });
+                } else {
+                    // Vertical line: box left (r, c-1) and right (r, c)
+                    if (c > 0) boxes.push({ row: r, col: c - 1 });
+                    if (c < n) boxes.push({ row: r, col: c });
+                }
+
+                return boxes;
+            }
+
+            countBoxSides(row, col) {
+                let count = 0;
+                const top = `h_${row}_${col}`;
+                const bottom = `h_${row + 1}_${col}`;
+                const left = `v_${row}_${col}`;
+                const right = `v_${row}_${col + 1}`;
+
+                if (gameState.lines[top]) count++;
+                if (gameState.lines[bottom]) count++;
+                if (gameState.lines[left]) count++;
+                if (gameState.lines[right]) count++;
+
+                return count;
+            }
+
+            estimateChainSize(startRow, startCol, excludeLine) {
+                // Simple chain estimation: count connected boxes with 2 sides
+                // This is a simplified version - full chain counting is complex
+                let chainSize = 1;
+                const visited = new Set();
+                visited.add(`${startRow}_${startCol}`);
+
+                const queue = [{ row: startRow, col: startCol }];
+                const n = gameState.gridSize;
+
+                while (queue.length > 0) {
+                    const current = queue.shift();
+                    const neighbors = [
+                        { row: current.row - 1, col: current.col }, // above
+                        { row: current.row + 1, col: current.col }, // below
+                        { row: current.row, col: current.col - 1 }, // left
+                        { row: current.row, col: current.col + 1 }  // right
+                    ];
+
+                    for (const neighbor of neighbors) {
+                        const key = `${neighbor.row}_${neighbor.col}`;
+                        if (visited.has(key)) continue;
+                        if (neighbor.row < 0 || neighbor.row >= n) continue;
+                        if (neighbor.col < 0 || neighbor.col >= n) continue;
+
+                        // Check if this box has 2 sides (would become 3 if connected)
+                        const sides = this.countBoxSides(neighbor.row, neighbor.col);
+                        if (sides >= 2) {
+                            visited.add(key);
+                            chainSize++;
+                            queue.push(neighbor);
+                        }
+                    }
+                }
+
+                return chainSize;
+            }
+        }
+
+        // Global AI instance
+        let executioner = new ExecutionerAI();
 
         // Selected colors
         let selectedColor = PLAYER_COLORS[0].hex;
@@ -1123,11 +1630,20 @@
             }
 
             // Grid size selection
-            document.querySelectorAll('.grid-sizes button').forEach(btn => {
+            document.querySelectorAll('.grid-sizes button[data-size]').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.querySelectorAll('.grid-sizes button').forEach(b => b.classList.remove('selected'));
+                    document.querySelectorAll('.grid-sizes button[data-size]').forEach(b => b.classList.remove('selected'));
                     btn.classList.add('selected');
                     gameState.gridSize = parseInt(btn.dataset.size);
+                });
+            });
+
+            // Difficulty selection for AI games
+            document.querySelectorAll('#difficulty-options button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#difficulty-options button').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedDifficulty = btn.dataset.difficulty;
                 });
             });
 
@@ -1194,17 +1710,77 @@
             document.getElementById('nav-menu').classList.toggle('active');
         }
 
+        // Selected difficulty for AI games
+        let selectedDifficulty = 'normal';
+
         // Setup screen functions
+        function select1Player() {
+            document.getElementById('player-count-selection').classList.add('hidden');
+            document.getElementById('ai-options').classList.remove('hidden');
+            document.getElementById('two-player-options').classList.add('hidden');
+            document.getElementById('local-setup').classList.add('hidden');
+            document.getElementById('online-options').classList.add('hidden');
+            document.getElementById('join-input').classList.add('hidden');
+        }
+
+        function select2Players() {
+            document.getElementById('player-count-selection').classList.add('hidden');
+            document.getElementById('ai-options').classList.add('hidden');
+            document.getElementById('two-player-options').classList.remove('hidden');
+            document.getElementById('local-setup').classList.add('hidden');
+            document.getElementById('online-options').classList.add('hidden');
+            document.getElementById('join-input').classList.add('hidden');
+        }
+
         function showLocalSetup() {
             document.getElementById('local-setup').classList.remove('hidden');
             document.getElementById('online-options').classList.add('hidden');
             document.getElementById('join-input').classList.add('hidden');
+            document.getElementById('two-player-options').classList.add('hidden');
         }
 
         function showOnlineOptions() {
             document.getElementById('online-options').classList.remove('hidden');
             document.getElementById('local-setup').classList.add('hidden');
             document.getElementById('join-input').classList.add('hidden');
+            document.getElementById('two-player-options').classList.add('hidden');
+        }
+
+        // Start game vs AI (The Executioner)
+        function startAIGame() {
+            const name = getPlayerName();
+
+            gameState = {
+                id: null,
+                gridSize: gameState.gridSize,
+                lines: {},
+                boxes: {},
+                currentTurn: 1,
+                player1: name,
+                player2: 'The Executioner',
+                color1: selectedColor,
+                color2: '#8b0000', // Dark red for The Executioner
+                score1: 0,
+                score2: 0,
+                isOnline: false,
+                isVsAI: true,
+                myPlayer: 1,
+                gameOver: false
+            };
+
+            // Initialize the AI
+            executioner.initialize(selectedDifficulty);
+
+            showGameScreen();
+            updateDisplay();
+            resizeCanvas();
+            drawBoard();
+
+            console.log('[Game] Started AI game:', {
+                gridSize: gameState.gridSize,
+                difficulty: selectedDifficulty,
+                player: name
+            });
         }
 
         function showJoinGame() {
@@ -2173,6 +2749,7 @@
             // Check for completed boxes
             const completedBoxes = checkCompletedBoxes(lineKey);
             let captured = false;
+            const boxesCapturedThisTurn = completedBoxes.length;
 
             for (const box of completedBoxes) {
                 if (!gameState.boxes[box]) {
@@ -2198,6 +2775,20 @@
             // Sync to Supabase if online
             if (gameState.isOnline) {
                 await syncToSupabase();
+            }
+
+            // AI game: Record player move for rubber-banding and trigger AI turn
+            if (gameState.isVsAI && !gameState.gameOver) {
+                // If player just moved, record it for rubber-banding
+                if (currentPlayer === 1) {
+                    executioner.recordPlayerMove(captured);
+                }
+
+                // If it's now AI's turn, trigger AI
+                if (gameState.currentTurn === 2 && !executioner.isThinking) {
+                    // Small delay before AI starts thinking
+                    setTimeout(() => executioner.executeTurn(), 100);
+                }
             }
         }
 
@@ -2348,7 +2939,16 @@
                 return;
             }
 
-            if (gameState.isOnline) {
+            if (gameState.isVsAI) {
+                // AI game
+                if (gameState.currentTurn === 1) {
+                    statusEl.textContent = 'Your turn - draw a line!';
+                    statusEl.className = 'status-message your-turn';
+                } else {
+                    statusEl.textContent = 'The Executioner is thinking...';
+                    statusEl.className = 'status-message opponent-turn';
+                }
+            } else if (gameState.isOnline) {
                 if (!gameState.player2) {
                     statusEl.textContent = 'Waiting for opponent to join...';
                     statusEl.className = 'status-message waiting';
@@ -2361,6 +2961,7 @@
                     statusEl.className = 'status-message opponent-turn';
                 }
             } else {
+                // Local 2-player game
                 const currentName = gameState.currentTurn === 1 ? gameState.player1 : gameState.player2;
                 statusEl.textContent = `${currentName}'s turn`;
                 statusEl.className = 'status-message your-turn';
@@ -2386,6 +2987,11 @@
                 supabaseClient.removeAllChannels();
             }
 
+            // Reset AI if it was an AI game
+            if (gameState.isVsAI) {
+                executioner.reset();
+            }
+
             // Reset to setup screen
             document.getElementById('setup-screen').classList.remove('hidden');
             document.getElementById('game-screen').classList.add('hidden');
@@ -2394,6 +3000,9 @@
             document.getElementById('join-input').classList.add('hidden');
             document.getElementById('join-link-setup').classList.add('hidden');
             document.getElementById('game-link').classList.add('hidden');
+            document.getElementById('ai-options').classList.add('hidden');
+            document.getElementById('two-player-options').classList.add('hidden');
+            document.getElementById('player-count-selection').classList.remove('hidden');
 
             // Clear pending join
             pendingJoinGameCode = null;
@@ -2416,6 +3025,7 @@
                 score1: 0,
                 score2: 0,
                 isOnline: false,
+                isVsAI: false,
                 myPlayer: 1,
                 gameOver: false
             };

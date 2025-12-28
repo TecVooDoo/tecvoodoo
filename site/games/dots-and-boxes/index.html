@@ -481,7 +481,7 @@
             <h2>Start a Game</h2>
 
             <div class="name-input">
-                <label for="player-name">Your Name</label>
+                <label for="player-name">What should we call you?</label>
                 <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
             </div>
 
@@ -653,6 +653,7 @@
             </div>
 
             <div class="game-controls">
+                <button id="play-again-btn" class="btn btn-primary hidden" onclick="playAgain()">Play Again</button>
                 <button class="btn btn-outline" onclick="newGame()">New Game</button>
             </div>
         </div>
@@ -2977,7 +2978,55 @@
             if (capturedBoxes === totalBoxes) {
                 gameState.gameOver = true;
                 updateStatusMessage();
+
+                // Show Play Again button for AI and local games
+                if (gameState.isVsAI || !gameState.isOnline) {
+                    document.getElementById('play-again-btn').classList.remove('hidden');
+                }
             }
+        }
+
+        // Play again with same settings (quick restart)
+        function playAgain() {
+            // Hide the play again button
+            document.getElementById('play-again-btn').classList.add('hidden');
+
+            // Remember current settings
+            const wasVsAI = gameState.isVsAI;
+            const gridSize = gameState.gridSize;
+            const player1Name = gameState.player1;
+            const player2Name = gameState.player2;
+            const color1 = gameState.color1;
+            const color2 = gameState.color2;
+
+            // Reset game state but keep settings
+            gameState = {
+                id: null,
+                gridSize: gridSize,
+                lines: {},
+                boxes: {},
+                currentTurn: 1,
+                player1: player1Name,
+                player2: player2Name,
+                color1: color1,
+                color2: color2,
+                score1: 0,
+                score2: 0,
+                isOnline: false,
+                isVsAI: wasVsAI,
+                myPlayer: 1,
+                gameOver: false
+            };
+
+            // Reset AI if applicable
+            if (wasVsAI && executioner.difficultyAdapter) {
+                executioner.difficultyAdapter.recentPlayerCaptures = [];
+                executioner.isThinking = false;
+            }
+
+            updateDisplay();
+            resizeCanvas();
+            drawBoard();
         }
 
         // New game
@@ -3003,6 +3052,7 @@
             document.getElementById('ai-options').classList.add('hidden');
             document.getElementById('two-player-options').classList.add('hidden');
             document.getElementById('player-count-selection').classList.remove('hidden');
+            document.getElementById('play-again-btn').classList.add('hidden');
 
             // Clear pending join
             pendingJoinGameCode = null;

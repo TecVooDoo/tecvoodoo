@@ -934,7 +934,8 @@
                     updateAuthUI();
                     loadMyGames();
                 } else if (event === 'INITIAL_SESSION') {
-                    // Initial page load - session from storage
+                    // Initial page load - only update if session exists
+                    // Don't clear user on null session - let getUser() handle initial state
                     if (session) {
                         currentUser = session.user;
                         currentPlayerId = await ensurePlayerRecord();
@@ -944,18 +945,25 @@
                 }
             });
 
-            // Check current session
+            // Check current session - use getSession first (local/fast), then validate with getUser
             try {
-                const { data: { user }, error } = await supabaseClient.auth.getUser();
-                if (!error && user) {
-                    console.log('Authenticated user found:', user.email);
-                    currentUser = user;
+                // First try getSession which reads from localStorage (fast, no network)
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session?.user) {
+                    console.log('Session found:', session.user.email);
+                    currentUser = session.user;
                     currentPlayerId = await ensurePlayerRecord();
+                    updateAuthUI();
+                    loadMyGames();
+                } else {
+                    // No local session, update UI to show signed out
+                    updateAuthUI();
+                    loadMyGames();
                 }
+            } catch (err) {
+                console.error('Error getting session:', err);
                 updateAuthUI();
                 loadMyGames();
-            } catch (err) {
-                console.error('Error getting user:', err);
             }
         }
 

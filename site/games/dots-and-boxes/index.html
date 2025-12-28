@@ -3216,10 +3216,15 @@
                     statusEl.textContent = 'Your turn - draw a line!';
                     statusEl.className = 'status-message your-turn';
                 } else {
-                    // Use opponent name for phantom games, otherwise "The Executioner"
-                    const opponentName = gameState.isPhantom ? gameState.player2 : 'The Executioner';
-                    statusEl.textContent = `${opponentName} is thinking...`;
-                    statusEl.className = 'status-message opponent-turn';
+                    if (gameState.isPhantom) {
+                        // Phantom game - pretend it's a real online opponent
+                        statusEl.textContent = `Waiting for ${gameState.player2}...`;
+                        statusEl.className = 'status-message opponent-turn';
+                    } else {
+                        // Real AI game vs The Executioner
+                        statusEl.textContent = 'The Executioner is thinking...';
+                        statusEl.className = 'status-message opponent-turn';
+                    }
                 }
             } else if (gameState.isOnline) {
                 if (!gameState.player2) {

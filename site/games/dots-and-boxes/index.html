@@ -831,41 +831,64 @@
 
         // Ensure player exists in players table
         async function ensurePlayerRecord() {
-            if (!supabaseClient || !currentUser) return null;
-
-            // Check if player record exists (use maybeSingle to avoid 406 error for new users)
-            const { data: existingPlayer } = await supabaseClient
-                .from('players')
-                .select('id')
-                .eq('auth_id', currentUser.id)
-                .maybeSingle();
-
-            if (existingPlayer) {
-                return existingPlayer.id;
-            }
-
-            // Create new player record
-            const displayName = currentUser.user_metadata?.full_name ||
-                                currentUser.user_metadata?.name ||
-                                currentUser.email?.split('@')[0] ||
-                                'Player';
-
-            const { data: newPlayer, error } = await supabaseClient
-                .from('players')
-                .insert({
-                    auth_id: currentUser.id,
-                    email: currentUser.email,
-                    display_name: displayName
-                })
-                .select('id')
-                .single();
-
-            if (error) {
-                console.error('Error creating player record:', error);
+            console.log('ensurePlayerRecord() called');
+            if (!supabaseClient || !currentUser) {
+                console.log('ensurePlayerRecord() early exit - supabaseClient:', !!supabaseClient, 'currentUser:', !!currentUser);
                 return null;
             }
+            console.log('ensurePlayerRecord() checking for existing player, auth_id:', currentUser.id);
 
-            return newPlayer.id;
+            // Check if player record exists (use maybeSingle to avoid 406 error for new users)
+            try {
+                console.log('ensurePlayerRecord() about to query players table...');
+                const { data: existingPlayer, error: selectError } = await supabaseClient
+                    .from('players')
+                    .select('id')
+                    .eq('auth_id', currentUser.id)
+                    .maybeSingle();
+
+                console.log('ensurePlayerRecord() query completed, existingPlayer:', existingPlayer, 'error:', selectError);
+
+                if (selectError) {
+                    console.error('ensurePlayerRecord() select error:', selectError);
+                    return null;
+                }
+
+                if (existingPlayer) {
+                    console.log('ensurePlayerRecord() found existing player:', existingPlayer.id);
+                    return existingPlayer.id;
+                }
+
+                console.log('ensurePlayerRecord() no existing player, creating new record...');
+
+                // Create new player record
+                const displayName = currentUser.user_metadata?.full_name ||
+                                    currentUser.user_metadata?.name ||
+                                    currentUser.email?.split('@')[0] ||
+                                    'Player';
+
+                console.log('ensurePlayerRecord() inserting with displayName:', displayName);
+                const { data: newPlayer, error } = await supabaseClient
+                    .from('players')
+                    .insert({
+                        auth_id: currentUser.id,
+                        email: currentUser.email,
+                        display_name: displayName
+                    })
+                    .select('id')
+                    .single();
+
+                if (error) {
+                    console.error('Error creating player record:', error);
+                    return null;
+                }
+
+                console.log('ensurePlayerRecord() created new player:', newPlayer?.id);
+                return newPlayer.id;
+            } catch (err) {
+                console.error('ensurePlayerRecord() exception:', err);
+                return null;
+            }
         }
 
         // Initialize auth state

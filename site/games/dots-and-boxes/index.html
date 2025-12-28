@@ -944,16 +944,10 @@
                 }
             });
 
-            // Use getUser() instead of getSession() for initial check
-            // getUser() always makes a fresh server call, while getSession() can return stale cached data
+            // Check current session
             try {
                 const { data: { user }, error } = await supabaseClient.auth.getUser();
-                if (error) {
-                    // User not authenticated or token invalid - this is expected for guests
-                    console.log('No authenticated user:', error.message);
-                    currentUser = null;
-                    currentPlayerId = null;
-                } else if (user) {
+                if (!error && user) {
                     console.log('Authenticated user found:', user.email);
                     currentUser = user;
                     currentPlayerId = await ensurePlayerRecord();
@@ -961,7 +955,7 @@
                 updateAuthUI();
                 loadMyGames();
             } catch (err) {
-                console.error('Exception getting user:', err);
+                console.error('Error getting user:', err);
             }
         }
 

@@ -1041,21 +1041,24 @@
             return newPlayer.id;
         }
 
-        // Check if URL has OAuth tokens that need to be processed
-        async function handleOAuthRedirect() {
-            // Check for tokens in URL hash (from OAuth implicit flow)
-            const hash = window.location.hash;
-            if (hash && hash.includes('access_token')) {
-                console.log('OAuth tokens detected in URL hash, processing...');
+        // Initialize auth state
+        async function initAuth() {
+            if (!supabaseClient) return;
 
-                // Parse the hash parameters
+            // FIRST: Check if there are OAuth tokens in the URL hash
+            // This must happen before we set up listeners, because setSession()
+            // will trigger the auth state change
+            const hash = window.location.hash;
+            const hasOAuthTokens = hash && hash.includes('access_token');
+
+            if (hasOAuthTokens) {
+                console.log('OAuth tokens detected in URL hash, processing immediately...');
                 const params = new URLSearchParams(hash.substring(1));
                 const accessToken = params.get('access_token');
                 const refreshToken = params.get('refresh_token');
 
                 if (accessToken) {
                     try {
-                        // Manually set the session with the tokens from the URL
                         const { data, error } = await supabaseClient.auth.setSession({
                             access_token: accessToken,
                             refresh_token: refreshToken || ''
@@ -1064,23 +1067,25 @@
                         if (error) {
                             console.error('Error setting session from URL tokens:', error);
                         } else {
-                            console.log('Session set successfully from URL tokens');
-                            // Clean up the URL by removing the hash
+                            console.log('Session set successfully from URL tokens:', data?.user?.email);
+                            // Clean up the URL
                             window.history.replaceState(null, '', window.location.pathname);
+                            // Set the user immediately
+                            if (data?.user) {
+                                currentUser = data.user;
+                                currentPlayerId = await ensurePlayerRecord();
+                                updateAuthUI();
+                                loadMyGames();
+                                return; // Auth is handled, skip the rest
+                            }
                         }
                     } catch (err) {
                         console.error('Exception setting session:', err);
                     }
                 }
             }
-        }
 
-        // Initialize auth state
-        async function initAuth() {
-            if (!supabaseClient) return;
-
-            // Listen for auth changes FIRST (before anything else)
-            // This ensures we catch the SIGNED_IN event from OAuth redirects
+            // Listen for auth changes for future sign-ins/sign-outs
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
                 console.log('Auth state changed:', event, session?.user?.email);
 
@@ -1112,10 +1117,6 @@
                     }
                 }
             });
-
-            // Check for OAuth redirect tokens in URL - this is a fallback
-            // in case Supabase doesn't automatically detect them
-            await handleOAuthRedirect();
 
             // Use getUser() instead of getSession() for initial check
             // getUser() always makes a fresh server call, while getSession() can return stale cached data

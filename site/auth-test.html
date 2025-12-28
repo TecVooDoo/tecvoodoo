@@ -174,35 +174,7 @@
             }
         });
 
-        // Check if URL has OAuth tokens that need to be processed
-        async function handleOAuthRedirect() {
-            const hash = window.location.hash;
-            if (hash && hash.includes('access_token')) {
-                console.log('OAuth tokens detected in URL hash, processing...');
-                const params = new URLSearchParams(hash.substring(1));
-                const accessToken = params.get('access_token');
-                const refreshToken = params.get('refresh_token');
-
-                if (accessToken) {
-                    try {
-                        const { data, error } = await sbClient.auth.setSession({
-                            access_token: accessToken,
-                            refresh_token: refreshToken || ''
-                        });
-                        if (error) {
-                            console.error('Error setting session from URL tokens:', error);
-                        } else {
-                            console.log('Session set successfully from URL tokens');
-                            window.history.replaceState(null, '', window.location.pathname);
-                        }
-                    } catch (err) {
-                        console.error('Exception setting session:', err);
-                    }
-                }
-            }
-        }
-
-        // Listen for auth changes FIRST
+        // Listen for auth changes
         sbClient.auth.onAuthStateChange((event, session) => {
             console.log('Auth event:', event, session?.user?.email);
 
@@ -218,8 +190,35 @@
         });
 
         async function checkAuth() {
-            // First check for OAuth redirect tokens
-            await handleOAuthRedirect();
+            // FIRST: Check if there are OAuth tokens in the URL hash
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                console.log('OAuth tokens detected in URL hash, processing immediately...');
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+
+                if (accessToken) {
+                    try {
+                        const { data, error } = await sbClient.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken || ''
+                        });
+                        if (error) {
+                            console.error('Error setting session from URL tokens:', error);
+                        } else {
+                            console.log('Session set successfully from URL tokens:', data?.user?.email);
+                            window.history.replaceState(null, '', window.location.pathname);
+                            if (data?.session) {
+                                updateUI(data.session);
+                                return; // Auth handled
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Exception setting session:', err);
+                    }
+                }
+            }
 
             // Use getUser() instead of getSession() - getUser() always makes a fresh server call
             const { data: { user }, error } = await sbClient.auth.getUser();

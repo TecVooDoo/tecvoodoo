@@ -14,6 +14,17 @@
                 <img src="images/tecvoodoo-logo-small.png" alt="TecVooDoo">
                 <span>TecVooDoo</span>
             </a>
+            <div class="nav-auth" id="nav-auth">
+                <div id="auth-signed-out">
+                    <button class="nav-auth-btn" onclick="showAuthModal()">Sign In</button>
+                </div>
+                <div id="auth-signed-in" class="hidden">
+                    <div class="nav-user-info">
+                        <span class="nav-user-email" id="user-email"></span>
+                        <button class="nav-auth-btn" onclick="signOut()">Sign Out</button>
+                    </div>
+                </div>
+            </div>
             <div class="nav-toggle" onclick="toggleNav()">
                 <span></span>
                 <span></span>
@@ -28,6 +39,35 @@
             </ul>
         </div>
     </nav>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal hidden">
+        <div class="auth-modal-content">
+            <h2>Sign In</h2>
+            <div class="auth-options">
+                <div class="auth-option" onclick="signInWithGoogle()">
+                    <div class="icon">G</div>
+                    <div class="label">Continue with Google</div>
+                </div>
+                <div class="auth-option" onclick="signInWithFacebook()">
+                    <div class="icon">f</div>
+                    <div class="label">Continue with Facebook</div>
+                </div>
+            </div>
+            <div class="auth-divider">or</div>
+            <div class="magic-link-form">
+                <input type="email" id="magic-link-email" placeholder="Enter your email">
+                <button class="btn btn-primary" onclick="sendMagicLink()">Send Magic Link</button>
+            </div>
+            <div class="auth-divider">or</div>
+            <div class="auth-option" onclick="signInAnonymously()">
+                <div class="icon">?</div>
+                <div class="label">Continue as Guest</div>
+            </div>
+            <div id="auth-message" class="auth-message hidden"></div>
+            <button class="auth-modal-close" onclick="hideAuthModal()">Cancel</button>
+        </div>
+    </div>
 
     <main>
         <div class="page-header">
@@ -141,8 +181,11 @@
             <a href="mailto:updates+subscribe@tecvoodoo.com?subject=Subscribe&body=Send this email to subscribe to TecVooDoo Updates." class="btn btn-outline">Subscribe</a>
         </div>
         <p>&copy; 2025 TecVooDoo LLC. All rights reserved.</p>
-        <span class="footer-updated">Updated: Dec 27, 2025</span>
+        <span class="footer-updated">Updated: Dec 28, 2025</span>
     </footer>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
         function toggleNav() {
@@ -186,6 +229,211 @@
                 openLightbox(this.src);
             });
         });
+
+        // Supabase config
+        const SUPABASE_URL = 'https://eenuxdjmsibcfhzgtslx.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_zwOfLO5ByeqZGS4iZdOw7A_sAlwaA_3';
+
+        // Initialize Supabase
+        let supabaseClient = null;
+        let currentUser = null;
+
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                    auth: {
+                        detectSessionInUrl: true,
+                        flowType: 'implicit',
+                        autoRefreshToken: true,
+                        persistSession: true
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Failed to initialize Supabase:', err);
+        }
+
+        // Auth UI functions
+        function showAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('auth-message').classList.add('hidden');
+        }
+
+        function hideAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        function showAuthMessage(message, isError = false) {
+            const msgEl = document.getElementById('auth-message');
+            msgEl.textContent = message;
+            msgEl.className = 'auth-message ' + (isError ? 'error' : 'success');
+            msgEl.classList.remove('hidden');
+        }
+
+        function updateAuthUI() {
+            const signedOutEl = document.getElementById('auth-signed-out');
+            const signedInEl = document.getElementById('auth-signed-in');
+            const userEmailEl = document.getElementById('user-email');
+
+            if (currentUser) {
+                signedOutEl.classList.add('hidden');
+                signedInEl.classList.remove('hidden');
+                if (currentUser.is_anonymous) {
+                    userEmailEl.textContent = 'Guest';
+                } else {
+                    userEmailEl.textContent = currentUser.email || 'User';
+                }
+            } else {
+                signedOutEl.classList.remove('hidden');
+                signedInEl.classList.add('hidden');
+            }
+        }
+
+        // Auth methods
+        async function signInWithGoogle() {
+            if (!supabaseClient) {
+                showAuthMessage('Online features not available', true);
+                return;
+            }
+            currentUser = null;
+            updateAuthUI();
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.href.split('?')[0].split('#')[0],
+                    queryParams: { prompt: 'select_account' }
+                }
+            });
+            if (error) showAuthMessage(error.message, true);
+        }
+
+        async function signInWithFacebook() {
+            if (!supabaseClient) {
+                showAuthMessage('Online features not available', true);
+                return;
+            }
+            currentUser = null;
+            updateAuthUI();
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'facebook',
+                options: {
+                    redirectTo: window.location.href.split('?')[0].split('#')[0]
+                }
+            });
+            if (error) showAuthMessage(error.message, true);
+        }
+
+        async function sendMagicLink() {
+            if (!supabaseClient) {
+                showAuthMessage('Online features not available', true);
+                return;
+            }
+            const email = document.getElementById('magic-link-email').value.trim();
+            if (!email) {
+                showAuthMessage('Please enter your email', true);
+                return;
+            }
+            const { error } = await supabaseClient.auth.signInWithOtp({
+                email: email,
+                options: {
+                    emailRedirectTo: window.location.href.split('?')[0].split('#')[0]
+                }
+            });
+            if (error) {
+                showAuthMessage(error.message, true);
+            } else {
+                showAuthMessage('Check your email for the magic link!');
+            }
+        }
+
+        async function signInAnonymously() {
+            if (!supabaseClient) {
+                showAuthMessage('Online features not available', true);
+                return;
+            }
+            const { error } = await supabaseClient.auth.signInAnonymously();
+            if (error) {
+                showAuthMessage(error.message, true);
+            } else {
+                hideAuthModal();
+            }
+        }
+
+        async function signOut() {
+            if (!supabaseClient) return;
+            currentUser = null;
+            updateAuthUI();
+            try {
+                await supabaseClient.auth.signOut({ scope: 'global' });
+            } catch (err) {
+                console.error('Sign out error:', err);
+            }
+        }
+
+        // Initialize auth
+        async function initAuth() {
+            if (!supabaseClient) return;
+
+            // Check for OAuth tokens in URL hash
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+                if (accessToken) {
+                    try {
+                        const { data, error } = await supabaseClient.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken || ''
+                        });
+                        if (!error && data?.user) {
+                            currentUser = data.user;
+                            updateAuthUI();
+                            window.history.replaceState(null, '', window.location.pathname);
+                            return;
+                        }
+                    } catch (err) {
+                        console.error('Error setting session:', err);
+                    }
+                }
+            }
+
+            // Listen for auth changes
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                    if (session) {
+                        currentUser = session.user;
+                        hideAuthModal();
+                        updateAuthUI();
+                        if (window.location.hash.includes('access_token')) {
+                            window.history.replaceState(null, '', window.location.pathname);
+                        }
+                    }
+                } else if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    updateAuthUI();
+                } else if (event === 'INITIAL_SESSION') {
+                    if (session) {
+                        currentUser = session.user;
+                        updateAuthUI();
+                    }
+                }
+            });
+
+            // Check current session
+            try {
+                const { data: { user }, error } = await supabaseClient.auth.getUser();
+                if (!error && user) {
+                    currentUser = user;
+                }
+                updateAuthUI();
+            } catch (err) {
+                console.error('Error getting user:', err);
+            }
+        }
+
+        // Init on load
+        initAuth();
     </script>
 </body>
 </html>

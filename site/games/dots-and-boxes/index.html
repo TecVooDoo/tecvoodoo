@@ -663,6 +663,13 @@
                 <div class="game-link-input">
                     <input type="text" id="share-link" readonly>
                     <button class="btn btn-outline" onclick="copyLink()">Copy</button>
+                    <button class="btn btn-outline" onclick="emailInvite()">Email</button>
+                </div>
+                <div class="email-invite-form hidden" id="email-invite-form">
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                        <input type="email" id="invite-email" placeholder="Friend's email address" style="flex: 1; padding: 0.5rem; background: var(--bg-dark); border: 1px solid #444; border-radius: 4px; color: var(--text-primary);">
+                        <button class="btn btn-primary" onclick="sendEmailInvite()">Send</button>
+                    </div>
                 </div>
             </div>
 
@@ -679,7 +686,7 @@
             <a href="mailto:updates+subscribe@tecvoodoo.com?subject=Subscribe&body=Send this email to subscribe to TecVooDoo Updates." class="btn btn-outline">Subscribe</a>
         </div>
         <p>&copy; 2025 TecVooDoo LLC. All rights reserved.</p>
-        <span class="footer-updated">Updated: Dec 28, 2025 - Matchmaking + AI</span>
+        <span class="footer-updated">Updated: Dec 28, 2025 - Email Invites</span>
     </footer>
 
     <!-- Supabase JS -->
@@ -2723,6 +2730,49 @@
             const originalText = btn.textContent;
             btn.textContent = 'Copied!';
             setTimeout(() => btn.textContent = originalText, 2000);
+        }
+
+        // Toggle email invite form
+        function emailInvite() {
+            const form = document.getElementById('email-invite-form');
+            form.classList.toggle('hidden');
+            if (!form.classList.contains('hidden')) {
+                document.getElementById('invite-email').focus();
+            }
+        }
+
+        // Send email invite via mailto
+        function sendEmailInvite() {
+            const email = document.getElementById('invite-email').value.trim();
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+
+            const gameLink = document.getElementById('share-link').value;
+            const playerName = gameState.player1 || 'Someone';
+            const subject = encodeURIComponent(`${playerName} invited you to play Dots and Boxes!`);
+            const body = encodeURIComponent(
+                `Hey!\n\n${playerName} wants to play Dots and Boxes with you.\n\n` +
+                `Click this link to join the game:\n${gameLink}\n\n` +
+                `It's a quick strategy game where you take turns drawing lines to capture boxes. ` +
+                `You can play at your own pace - no need to be online at the same time!\n\n` +
+                `See you in the game!\n\n` +
+                `- TecVooDoo Games\nhttps://tecvoodoo.com`
+            );
+
+            // Open mailto link
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+
+            // Show feedback
+            const sendBtn = document.querySelector('#email-invite-form button');
+            const originalText = sendBtn.textContent;
+            sendBtn.textContent = 'Opening Email...';
+            setTimeout(() => {
+                sendBtn.textContent = originalText;
+                document.getElementById('invite-email').value = '';
+                document.getElementById('email-invite-form').classList.add('hidden');
+            }, 2000);
         }
 
         // Resize canvas based on grid size

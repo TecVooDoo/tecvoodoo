@@ -368,6 +368,7 @@ main {
 
 /* Footer */
 footer {
+    position: relative;
     text-align: center;
     padding: 2rem;
     border-top: 1px solid #222;
@@ -391,6 +392,23 @@ footer a {
 .footer-subscribe .btn {
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
+}
+
+.footer-updated {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+    .footer-updated {
+        position: static;
+        margin-top: 1rem;
+        opacity: 0.6;
+    }
 }
 
 /* Section titles */

@@ -394,6 +394,22 @@
                 justify-content: center;
             }
         }
+
+        /* Matchmaking spinner */
+        .matchmaking-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #333;
+            border-top: 4px solid var(--accent-cyan);
+            border-radius: 50%;
+            margin: 1rem auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -504,7 +520,7 @@
             <!-- Step 2: Player Count Selection -->
             <div id="player-count-selection" class="setup-options" style="margin-top: 2rem;">
                 <h3 style="color: var(--text-secondary); margin-bottom: 1rem; text-align: center;">How many players?</h3>
-                <div class="setup-option" onclick="select1Player()">
+                <div class="setup-option" onclick="startQuickAIGame()">
                     <h3>1 Player</h3>
                     <p>Play against The Executioner AI</p>
                 </div>
@@ -514,31 +530,15 @@
                 </div>
             </div>
 
-            <!-- Step 3a: 1-Player Options (AI) -->
-            <div id="ai-options" class="hidden" style="margin-top: 1.5rem;">
-                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid #333;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Difficulty</h3>
-                    <div class="grid-sizes" id="difficulty-options">
-                        <button data-difficulty="easy">Easy</button>
-                        <button data-difficulty="normal" class="selected">Normal</button>
-                        <button data-difficulty="hard">Hard</button>
-                    </div>
-                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.75rem; text-align: center;">
-                        The Executioner adapts to your skill level
-                    </p>
-                    <button class="btn btn-primary start-button" onclick="startAIGame()">Play vs The Executioner</button>
-                </div>
-            </div>
-
-            <!-- Step 3b: 2-Player Options -->
+            <!-- Step 3: 2-Player Options -->
             <div id="two-player-options" class="setup-options hidden" style="margin-top: 1.5rem;">
                 <div class="setup-option" onclick="showLocalSetup()">
                     <h3>Local Game</h3>
-                    <p>Play on this device, taking turns (not saved)</p>
+                    <p>Pass-and-play on this device</p>
                 </div>
                 <div class="setup-option" onclick="showOnlineOptions()">
                     <h3>Online Game</h3>
-                    <p>Play by sharing a link</p>
+                    <p>Play someone over the internet</p>
                 </div>
             </div>
 
@@ -566,14 +566,28 @@
             <!-- Online sub-options (hidden by default) -->
             <div id="online-options" class="hidden" style="margin-top: 1.5rem;">
                 <div class="setup-options">
+                    <div class="setup-option" onclick="startMatchmaking()">
+                        <h3>Play Random Person</h3>
+                        <p>Get matched with someone looking for a game</p>
+                    </div>
                     <div class="setup-option" onclick="createOnlineGame()">
-                        <h3>Create New Game</h3>
-                        <p>Start a new game and get a link to share</p>
+                        <h3>Invite a Friend</h3>
+                        <p>Get a link to share with someone specific</p>
                     </div>
                     <div class="setup-option" onclick="showJoinGame()">
                         <h3>Join Game</h3>
-                        <p>Enter a game code to join an existing game</p>
+                        <p>Enter a game code you received</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Matchmaking status (hidden by default) -->
+            <div id="matchmaking-status" class="hidden" style="margin-top: 1.5rem;">
+                <div style="background: var(--bg-card); padding: 2rem; border-radius: 12px; border: 1px solid #333; text-align: center;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Finding Opponent...</h3>
+                    <div class="matchmaking-spinner"></div>
+                    <p id="matchmaking-message" style="color: var(--text-secondary); margin-top: 1rem;">Looking for players...</p>
+                    <button class="btn btn-outline" onclick="cancelMatchmaking()" style="margin-top: 1rem;">Cancel</button>
                 </div>
             </div>
 
@@ -1714,41 +1728,20 @@
         // Selected difficulty for AI games
         let selectedDifficulty = 'normal';
 
+        // Matchmaking state
+        let matchmakingTimeout = null;
+        let matchmakingSubscription = null;
+
+        // Random names for phantom AI opponents
+        const PHANTOM_NAMES = [
+            'Bob', 'Cuddles', 'Steve', 'Sparky', 'Max', 'Luna', 'Shadow',
+            'Dash', 'Ace', 'Ziggy', 'Bolt', 'Nova', 'Rex', 'Pixel', 'Jazz',
+            'Echo', 'Blaze', 'Storm', 'Cosmo', 'Rogue', 'Jinx', 'Turbo'
+        ];
+
         // Setup screen functions
-        function select1Player() {
-            document.getElementById('player-count-selection').classList.add('hidden');
-            document.getElementById('ai-options').classList.remove('hidden');
-            document.getElementById('two-player-options').classList.add('hidden');
-            document.getElementById('local-setup').classList.add('hidden');
-            document.getElementById('online-options').classList.add('hidden');
-            document.getElementById('join-input').classList.add('hidden');
-        }
-
-        function select2Players() {
-            document.getElementById('player-count-selection').classList.add('hidden');
-            document.getElementById('ai-options').classList.add('hidden');
-            document.getElementById('two-player-options').classList.remove('hidden');
-            document.getElementById('local-setup').classList.add('hidden');
-            document.getElementById('online-options').classList.add('hidden');
-            document.getElementById('join-input').classList.add('hidden');
-        }
-
-        function showLocalSetup() {
-            document.getElementById('local-setup').classList.remove('hidden');
-            document.getElementById('online-options').classList.add('hidden');
-            document.getElementById('join-input').classList.add('hidden');
-            document.getElementById('two-player-options').classList.add('hidden');
-        }
-
-        function showOnlineOptions() {
-            document.getElementById('online-options').classList.remove('hidden');
-            document.getElementById('local-setup').classList.add('hidden');
-            document.getElementById('join-input').classList.add('hidden');
-            document.getElementById('two-player-options').classList.add('hidden');
-        }
-
-        // Start game vs AI (The Executioner)
-        function startAIGame() {
+        function startQuickAIGame() {
+            // Start AI game immediately with default (normal) difficulty
             const name = getPlayerName();
 
             gameState = {
@@ -1769,23 +1762,300 @@
                 gameOver: false
             };
 
-            // Initialize the AI
-            executioner.initialize(selectedDifficulty);
+            // Initialize the AI with default normal difficulty
+            executioner.initialize('normal');
 
             showGameScreen();
             updateDisplay();
             resizeCanvas();
             drawBoard();
 
-            console.log('[Game] Started AI game:', {
+            console.log('[Game] Started quick AI game:', {
                 gridSize: gameState.gridSize,
-                difficulty: selectedDifficulty,
                 player: name
             });
         }
 
+        function select2Players() {
+            document.getElementById('player-count-selection').classList.add('hidden');
+            document.getElementById('two-player-options').classList.remove('hidden');
+            document.getElementById('local-setup').classList.add('hidden');
+            document.getElementById('online-options').classList.add('hidden');
+            document.getElementById('join-input').classList.add('hidden');
+            document.getElementById('matchmaking-status').classList.add('hidden');
+        }
+
+        function showLocalSetup() {
+            document.getElementById('local-setup').classList.remove('hidden');
+            document.getElementById('online-options').classList.add('hidden');
+            document.getElementById('join-input').classList.add('hidden');
+            document.getElementById('two-player-options').classList.add('hidden');
+            document.getElementById('matchmaking-status').classList.add('hidden');
+        }
+
+        function showOnlineOptions() {
+            document.getElementById('online-options').classList.remove('hidden');
+            document.getElementById('local-setup').classList.add('hidden');
+            document.getElementById('join-input').classList.add('hidden');
+            document.getElementById('two-player-options').classList.add('hidden');
+            document.getElementById('matchmaking-status').classList.add('hidden');
+        }
+
         function showJoinGame() {
             document.getElementById('join-input').classList.remove('hidden');
+        }
+
+        // ============================================================
+        // MATCHMAKING SYSTEM
+        // ============================================================
+
+        async function startMatchmaking() {
+            if (!supabaseClient) {
+                alert('Online features are not available. Please check your internet connection.');
+                return;
+            }
+
+            const name = getPlayerName();
+
+            // Show matchmaking UI
+            document.getElementById('online-options').classList.add('hidden');
+            document.getElementById('matchmaking-status').classList.remove('hidden');
+            document.getElementById('matchmaking-message').textContent = 'Looking for players...';
+
+            console.log('[Matchmaking] Starting search for opponent...');
+
+            try {
+                // Check if anyone is waiting in the queue
+                const { data: waitingPlayers, error: queueError } = await supabaseClient
+                    .from('matchmaking_queue')
+                    .select('*')
+                    .eq('grid_size', gameState.gridSize)
+                    .order('created_at', { ascending: true })
+                    .limit(1);
+
+                if (queueError) {
+                    console.error('[Matchmaking] Queue error:', queueError);
+                    // Queue table might not exist yet - fall through to phantom match
+                }
+
+                if (waitingPlayers && waitingPlayers.length > 0) {
+                    // Found someone waiting! Match with them
+                    const opponent = waitingPlayers[0];
+                    console.log('[Matchmaking] Found opponent:', opponent);
+
+                    // Remove them from queue
+                    await supabaseClient
+                        .from('matchmaking_queue')
+                        .delete()
+                        .eq('id', opponent.id);
+
+                    // Join their game
+                    document.getElementById('matchmaking-message').textContent = 'Found opponent! Joining game...';
+                    await loadOnlineGameWithColor(opponent.session_id, name, selectedColor);
+                    document.getElementById('matchmaking-status').classList.add('hidden');
+                    return;
+                }
+
+                // No one waiting - add ourselves to queue and wait
+                document.getElementById('matchmaking-message').textContent = 'No one available. Creating game...';
+
+                // Create a game session first
+                const gameCode = generateGameCode();
+
+                // Create game session
+                const { error: sessionError } = await supabaseClient
+                    .from('game_sessions')
+                    .insert({
+                        id: gameCode,
+                        game_type: 'dots-and-boxes',
+                        state: {
+                            gridSize: gameState.gridSize,
+                            lines: {},
+                            boxes: {},
+                            color1: selectedColor,
+                            color2: null
+                        },
+                        status: 'waiting',
+                        is_vs_ai: false,
+                        current_turn: 1,
+                        created_by: currentPlayerId
+                    });
+
+                if (sessionError) {
+                    console.error('[Matchmaking] Session creation error:', sessionError);
+                    throw sessionError;
+                }
+
+                // Add ourselves as player 1
+                let playerId = currentPlayerId;
+                if (!playerId) {
+                    const { data: anonPlayer } = await supabaseClient
+                        .from('players')
+                        .insert({ display_name: name, is_ai: false })
+                        .select('id')
+                        .single();
+                    playerId = anonPlayer?.id;
+                }
+
+                if (playerId) {
+                    await supabaseClient
+                        .from('session_players')
+                        .insert({
+                            session_id: gameCode,
+                            player_id: playerId,
+                            player_number: 1,
+                            color: selectedColor,
+                            score: 0
+                        });
+                }
+
+                // Add to matchmaking queue
+                const { error: insertError } = await supabaseClient
+                    .from('matchmaking_queue')
+                    .insert({
+                        player_id: playerId,
+                        grid_size: gameState.gridSize,
+                        session_id: gameCode
+                    });
+
+                if (insertError) {
+                    console.log('[Matchmaking] Could not add to queue (table may not exist):', insertError);
+                }
+
+                // Subscribe to session changes to detect when someone joins
+                matchmakingSubscription = supabaseClient
+                    .channel(`matchmaking-${gameCode}`)
+                    .on('postgres_changes',
+                        { event: 'INSERT', schema: 'public', table: 'session_players', filter: `session_id=eq.${gameCode}` },
+                        async (payload) => {
+                            if (payload.new.player_number === 2) {
+                                // Someone joined! Load the game
+                                console.log('[Matchmaking] Opponent joined!');
+                                clearTimeout(matchmakingTimeout);
+                                if (matchmakingSubscription) {
+                                    supabaseClient.removeChannel(matchmakingSubscription);
+                                    matchmakingSubscription = null;
+                                }
+
+                                // Remove from queue
+                                await supabaseClient
+                                    .from('matchmaking_queue')
+                                    .delete()
+                                    .eq('session_id', gameCode);
+
+                                document.getElementById('matchmaking-message').textContent = 'Opponent found!';
+                                await loadOnlineGame(gameCode);
+                                document.getElementById('matchmaking-status').classList.add('hidden');
+                            }
+                        }
+                    )
+                    .subscribe();
+
+                document.getElementById('matchmaking-message').textContent = 'Waiting for opponent...';
+
+                // After 5 seconds, fall back to phantom AI
+                matchmakingTimeout = setTimeout(async () => {
+                    console.log('[Matchmaking] Timeout - starting phantom AI game');
+
+                    // Clean up subscription
+                    if (matchmakingSubscription) {
+                        supabaseClient.removeChannel(matchmakingSubscription);
+                        matchmakingSubscription = null;
+                    }
+
+                    // Remove from queue
+                    await supabaseClient
+                        .from('matchmaking_queue')
+                        .delete()
+                        .eq('session_id', gameCode);
+
+                    // Delete the waiting game session
+                    await supabaseClient
+                        .from('session_players')
+                        .delete()
+                        .eq('session_id', gameCode);
+
+                    await supabaseClient
+                        .from('game_sessions')
+                        .delete()
+                        .eq('id', gameCode);
+
+                    // Start phantom AI game
+                    startPhantomAIGame();
+                }, 5000);
+
+            } catch (err) {
+                console.error('[Matchmaking] Error:', err);
+                // Fall back to phantom AI
+                startPhantomAIGame();
+            }
+        }
+
+        function cancelMatchmaking() {
+            console.log('[Matchmaking] Cancelled by user');
+
+            // Clear timeout
+            if (matchmakingTimeout) {
+                clearTimeout(matchmakingTimeout);
+                matchmakingTimeout = null;
+            }
+
+            // Clean up subscription
+            if (matchmakingSubscription) {
+                supabaseClient.removeChannel(matchmakingSubscription);
+                matchmakingSubscription = null;
+            }
+
+            // Hide matchmaking UI, show online options
+            document.getElementById('matchmaking-status').classList.add('hidden');
+            document.getElementById('online-options').classList.remove('hidden');
+        }
+
+        function startPhantomAIGame() {
+            // Hide matchmaking UI
+            document.getElementById('matchmaking-status').classList.add('hidden');
+
+            const name = getPlayerName();
+
+            // Pick random opponent name and color
+            const phantomName = PHANTOM_NAMES[Math.floor(Math.random() * PHANTOM_NAMES.length)];
+            const phantomColor = PLAYER_COLORS[Math.floor(Math.random() * PLAYER_COLORS.length)].hex;
+
+            // Make sure phantom color is different from player color
+            let finalPhantomColor = phantomColor;
+            if (phantomColor === selectedColor) {
+                const otherColors = PLAYER_COLORS.filter(c => c.hex !== selectedColor);
+                finalPhantomColor = otherColors[Math.floor(Math.random() * otherColors.length)].hex;
+            }
+
+            gameState = {
+                id: null,
+                gridSize: gameState.gridSize,
+                lines: {},
+                boxes: {},
+                currentTurn: 1,
+                player1: name,
+                player2: phantomName,
+                color1: selectedColor,
+                color2: finalPhantomColor,
+                score1: 0,
+                score2: 0,
+                isOnline: false,
+                isVsAI: true,
+                isPhantom: true, // Flag to identify phantom games
+                myPlayer: 1,
+                gameOver: false
+            };
+
+            // Initialize the AI with normal difficulty
+            executioner.initialize('normal');
+
+            showGameScreen();
+            updateDisplay();
+            resizeCanvas();
+            drawBoard();
+
+            console.log('[Game] Started phantom AI game vs', phantomName);
         }
 
         function getPlayerName() {
@@ -2941,12 +3211,14 @@
             }
 
             if (gameState.isVsAI) {
-                // AI game
+                // AI game (regular or phantom)
                 if (gameState.currentTurn === 1) {
                     statusEl.textContent = 'Your turn - draw a line!';
                     statusEl.className = 'status-message your-turn';
                 } else {
-                    statusEl.textContent = 'The Executioner is thinking...';
+                    // Use opponent name for phantom games, otherwise "The Executioner"
+                    const opponentName = gameState.isPhantom ? gameState.player2 : 'The Executioner';
+                    statusEl.textContent = `${opponentName} is thinking...`;
                     statusEl.className = 'status-message opponent-turn';
                 }
             } else if (gameState.isOnline) {
@@ -3049,10 +3321,20 @@
             document.getElementById('join-input').classList.add('hidden');
             document.getElementById('join-link-setup').classList.add('hidden');
             document.getElementById('game-link').classList.add('hidden');
-            document.getElementById('ai-options').classList.add('hidden');
             document.getElementById('two-player-options').classList.add('hidden');
             document.getElementById('player-count-selection').classList.remove('hidden');
             document.getElementById('play-again-btn').classList.add('hidden');
+            document.getElementById('matchmaking-status').classList.add('hidden');
+
+            // Cancel any pending matchmaking
+            if (matchmakingTimeout) {
+                clearTimeout(matchmakingTimeout);
+                matchmakingTimeout = null;
+            }
+            if (matchmakingSubscription) {
+                supabaseClient.removeChannel(matchmakingSubscription);
+                matchmakingSubscription = null;
+            }
 
             // Clear pending join
             pendingJoinGameCode = null;

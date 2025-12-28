@@ -121,8 +121,8 @@ nav ul li a.active {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-left: auto;
-    margin-right: 1.5rem;
+    order: 10; /* Place after menu items */
+    margin-left: 1.5rem;
 }
 
 .nav-auth-btn {
@@ -657,6 +657,8 @@ footer a {
     }
 
     .nav-auth {
+        order: 0; /* Reset order on mobile to stay before hamburger */
+        margin-left: auto;
         margin-right: 1rem;
     }
 

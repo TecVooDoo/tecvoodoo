@@ -473,6 +473,11 @@
 
         <!-- Setup Screen -->
         <div id="setup-screen" class="setup-screen">
+            <!-- Sign-in hint (shown when not signed in) -->
+            <div id="my-games-hint" style="text-align: center; margin-bottom: 1.5rem;">
+                <p style="color: var(--text-secondary);">Sign in to view and sync your games across devices.</p>
+            </div>
+
             <h2>Start a Game</h2>
 
             <div class="name-input">
@@ -571,11 +576,6 @@
 
                     <button class="btn btn-primary start-button" onclick="confirmJoinGame()">Join Game</button>
                 </div>
-            </div>
-
-            <!-- Sign-in hint (shown when not signed in) -->
-            <div id="my-games-hint" class="my-games" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #333;">
-                <p style="color: var(--text-secondary); text-align: center;">Sign in to view and sync your games across devices.</p>
             </div>
 
             <!-- My Games Section -->

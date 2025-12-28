@@ -830,7 +830,14 @@
         let supabaseClient = null;
         try {
             if (window.supabase) {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                    auth: {
+                        detectSessionInUrl: true,  // Explicitly enable URL hash detection
+                        flowType: 'implicit',      // Use implicit flow for client-side
+                        autoRefreshToken: true,
+                        persistSession: true
+                    }
+                });
                 console.log('Supabase initialized successfully');
             } else {
                 console.warn('Supabase library not loaded - online features disabled');
@@ -1034,11 +1041,45 @@
             return newPlayer.id;
         }
 
+        // Check if URL has OAuth tokens that need to be processed
+        async function handleOAuthRedirect() {
+            // Check for tokens in URL hash (from OAuth implicit flow)
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                console.log('OAuth tokens detected in URL hash, processing...');
+
+                // Parse the hash parameters
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+
+                if (accessToken) {
+                    try {
+                        // Manually set the session with the tokens from the URL
+                        const { data, error } = await supabaseClient.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken || ''
+                        });
+
+                        if (error) {
+                            console.error('Error setting session from URL tokens:', error);
+                        } else {
+                            console.log('Session set successfully from URL tokens');
+                            // Clean up the URL by removing the hash
+                            window.history.replaceState(null, '', window.location.pathname);
+                        }
+                    } catch (err) {
+                        console.error('Exception setting session:', err);
+                    }
+                }
+            }
+        }
+
         // Initialize auth state
         async function initAuth() {
             if (!supabaseClient) return;
 
-            // Listen for auth changes FIRST (before getUser)
+            // Listen for auth changes FIRST (before anything else)
             // This ensures we catch the SIGNED_IN event from OAuth redirects
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
                 console.log('Auth state changed:', event, session?.user?.email);
@@ -1051,6 +1092,10 @@
                         hideAuthModal();
                         updateAuthUI();
                         loadMyGames();
+                        // Clean up the URL hash if present
+                        if (window.location.hash.includes('access_token')) {
+                            window.history.replaceState(null, '', window.location.pathname);
+                        }
                     }
                 } else if (event === 'SIGNED_OUT') {
                     currentUser = null;
@@ -1067,6 +1112,10 @@
                     }
                 }
             });
+
+            // Check for OAuth redirect tokens in URL - this is a fallback
+            // in case Supabase doesn't automatically detect them
+            await handleOAuthRedirect();
 
             // Use getUser() instead of getSession() for initial check
             // getUser() always makes a fresh server call, while getSession() can return stale cached data

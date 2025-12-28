@@ -936,50 +936,51 @@
             }
 
             // Listen for auth changes for future sign-ins/sign-outs
-            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('Auth state changed:', event, session?.user?.email);
 
-                try {
-                    // Handle specific events
-                    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                        if (session) {
-                            console.log('SIGNED_IN: Setting currentUser...');
-                            currentUser = session.user;
-                            console.log('SIGNED_IN: currentUser set, calling ensurePlayerRecord...');
-                            currentPlayerId = await ensurePlayerRecord();
-                            console.log('SIGNED_IN: ensurePlayerRecord done, playerId:', currentPlayerId);
-                            hideAuthModal();
-                            console.log('SIGNED_IN: Calling updateAuthUI...');
-                            updateAuthUI();
-                            console.log('SIGNED_IN: updateAuthUI done');
-                            loadMyGames();
-                            // Clean up the URL hash if present
-                            if (window.location.hash.includes('access_token')) {
-                                window.history.replaceState(null, '', window.location.pathname);
-                            }
-                        }
-                    } else if (event === 'SIGNED_OUT') {
-                        currentUser = null;
-                        currentPlayerId = null;
+                // Handle specific events - DON'T block on database queries
+                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                    if (session) {
+                        console.log('SIGNED_IN: Setting currentUser and updating UI immediately...');
+                        currentUser = session.user;
+                        hideAuthModal();
                         updateAuthUI();
-                        loadMyGames();
-                    } else if (event === 'INITIAL_SESSION') {
-                        // Initial page load - only update if session exists
-                        // Don't clear user on null session - let getUser() handle initial state
-                        if (session) {
-                            console.log('INITIAL_SESSION: Setting currentUser...');
-                            currentUser = session.user;
-                            console.log('INITIAL_SESSION: currentUser set, calling ensurePlayerRecord...');
-                            currentPlayerId = await ensurePlayerRecord();
-                            console.log('INITIAL_SESSION: ensurePlayerRecord done, playerId:', currentPlayerId);
-                            console.log('INITIAL_SESSION: Calling updateAuthUI...');
-                            updateAuthUI();
-                            console.log('INITIAL_SESSION: updateAuthUI done');
-                            loadMyGames();
+                        // Clean up the URL hash if present
+                        if (window.location.hash.includes('access_token')) {
+                            window.history.replaceState(null, '', window.location.pathname);
                         }
+                        // Run database operations in background (don't await)
+                        ensurePlayerRecord().then(id => {
+                            console.log('SIGNED_IN: ensurePlayerRecord completed, playerId:', id);
+                            currentPlayerId = id;
+                            loadMyGames();
+                        }).catch(err => {
+                            console.error('SIGNED_IN: ensurePlayerRecord failed:', err);
+                            loadMyGames(); // Still load games even if player record fails
+                        });
                     }
-                } catch (err) {
-                    console.error('Error in onAuthStateChange handler:', err);
+                } else if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    currentPlayerId = null;
+                    updateAuthUI();
+                    loadMyGames();
+                } else if (event === 'INITIAL_SESSION') {
+                    // Initial page load - only update if session exists
+                    if (session) {
+                        console.log('INITIAL_SESSION: Setting currentUser and updating UI immediately...');
+                        currentUser = session.user;
+                        updateAuthUI();
+                        // Run database operations in background (don't await)
+                        ensurePlayerRecord().then(id => {
+                            console.log('INITIAL_SESSION: ensurePlayerRecord completed, playerId:', id);
+                            currentPlayerId = id;
+                            loadMyGames();
+                        }).catch(err => {
+                            console.error('INITIAL_SESSION: ensurePlayerRecord failed:', err);
+                            loadMyGames();
+                        });
+                    }
                 }
             });
             console.log('onAuthStateChange listener registered');
@@ -994,9 +995,16 @@
                 if (!error && user) {
                     console.log('User found from getUser():', user.email);
                     currentUser = user;
-                    currentPlayerId = await ensurePlayerRecord();
-                    updateAuthUI();
-                    loadMyGames();
+                    updateAuthUI(); // Update UI immediately
+                    // Run database operations in background (don't await)
+                    ensurePlayerRecord().then(id => {
+                        console.log('getUser: ensurePlayerRecord completed, playerId:', id);
+                        currentPlayerId = id;
+                        loadMyGames();
+                    }).catch(err => {
+                        console.error('getUser: ensurePlayerRecord failed:', err);
+                        loadMyGames();
+                    });
                 } else if (currentUser) {
                     // getUser() failed but onAuthStateChange already set a user - keep it
                     console.log('getUser() failed but already have user from onAuthStateChange:', currentUser.email);

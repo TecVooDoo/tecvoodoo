@@ -69,21 +69,6 @@
         </div>
     </div>
 
-    <!-- Beta Reader Signup Modal -->
-    <div id="beta-modal" class="auth-modal hidden">
-        <div class="auth-modal-content">
-            <h2>Beta Read</h2>
-            <p id="beta-book-title" style="color: var(--accent-cyan); margin-bottom: 1.5rem;"></p>
-            <div class="magic-link-form">
-                <input type="text" id="beta-name" placeholder="Your name">
-                <input type="email" id="beta-email" placeholder="Your email">
-                <button class="btn btn-beta" onclick="submitBetaSignup()" id="beta-submit-btn">Sign Up</button>
-            </div>
-            <div id="beta-message" class="auth-message hidden"></div>
-            <button class="auth-modal-close" onclick="hideBetaModal()">Cancel</button>
-        </div>
-    </div>
-
     <main>
         <div class="page-header">
             <h1>Books</h1>
@@ -141,8 +126,7 @@
                         <h3>Murder, Malady and Monsters</h3>
                         <p>Book One of The M Particle Series. A boy who thought he was protecting his sister. A father who deserved what he got. A mother who let it happen. A dog named Crack. This is where it begins.</p>
                         <p style="margin-top: 1rem;">
-                            <span class="status live">Querying Agents</span>
-                            <button class="btn btn-beta" onclick="showBetaModal('Murder, Malady and Monsters')">Beta Read</button>
+                            <a href="murder-malady-monsters.html" class="btn btn-primary">Read Now</a>
                         </p>
                     </div>
                 </div>
@@ -377,104 +361,6 @@
 
         // Init on load
         initAuth();
-
-        // Beta Reader Signup
-        const WORKER_URL = 'https://tecvoodoo-email.runeduvall.workers.dev';
-        let currentBetaBook = '';
-
-        function showBetaModal(bookTitle) {
-            currentBetaBook = bookTitle;
-            document.getElementById('beta-book-title').textContent = bookTitle;
-            document.getElementById('beta-name').value = '';
-            document.getElementById('beta-email').value = '';
-            document.getElementById('beta-message').classList.add('hidden');
-            document.getElementById('beta-submit-btn').disabled = false;
-            document.getElementById('beta-submit-btn').textContent = 'Sign Up';
-            document.getElementById('beta-modal').classList.remove('hidden');
-        }
-
-        function hideBetaModal() {
-            document.getElementById('beta-modal').classList.add('hidden');
-            currentBetaBook = '';
-        }
-
-        function showBetaMessage(message, isError = false) {
-            const msgEl = document.getElementById('beta-message');
-            msgEl.textContent = message;
-            msgEl.className = 'auth-message ' + (isError ? 'error' : 'success');
-            msgEl.classList.remove('hidden');
-        }
-
-        async function submitBetaSignup() {
-            const name = document.getElementById('beta-name').value.trim();
-            const email = document.getElementById('beta-email').value.trim();
-
-            if (!email) {
-                showBetaMessage('Please enter your email', true);
-                return;
-            }
-
-            // Basic email validation
-            if (!email.includes('@') || !email.includes('.')) {
-                showBetaMessage('Please enter a valid email', true);
-                return;
-            }
-
-            const submitBtn = document.getElementById('beta-submit-btn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Signing up...';
-
-            try {
-                // Store in Supabase
-                if (supabaseClient) {
-                    const { error: dbError } = await supabaseClient
-                        .from('beta_readers')
-                        .insert({ email: email, name: name || null, book_title: currentBetaBook });
-
-                    if (dbError) {
-                        // Check for duplicate
-                        if (dbError.code === '23505') {
-                            showBetaMessage('You\'re already signed up for this book!', true);
-                            submitBtn.disabled = false;
-                            submitBtn.textContent = 'Sign Up';
-                            return;
-                        }
-                        console.error('Database error:', dbError);
-                    }
-                }
-
-                // Send notification email
-                const response = await fetch(WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: 'beta-reader',
-                        email: email,
-                        name: name || null,
-                        bookTitle: currentBetaBook
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to send notification');
-                }
-
-                // Success
-                showBetaMessage('Thanks for volunteering to beta read! You\'ll receive an email with instructions soon.');
-                submitBtn.textContent = 'Signed Up!';
-
-                // Close modal after delay
-                setTimeout(() => {
-                    hideBetaModal();
-                }, 3000);
-
-            } catch (error) {
-                console.error('Beta signup error:', error);
-                showBetaMessage('Something went wrong. Please try again.', true);
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Sign Up';
-            }
-        }
     </script>
 </body>
 </html>

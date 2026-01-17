@@ -3,15 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Games - TecVooDoo LLC</title>
-    <meta name="description" content="Games by TecVooDoo LLC. Word games with guillotines, shrunken heads on spikes, and more.">
-    <link rel="stylesheet" href="css/style.css">
+    <title>Don't Lose Your Head - TecVooDoo LLC</title>
+    <meta name="description" content="Play Don't Lose Your Head - a brutal twist on Hangman meets Battleship. Choose your letters wisely or your head's on the chopping block.">
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .game-wrapper {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-dark, #0a0a0a);
+        }
+
+        .game-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .auth-required {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .auth-required h2 {
+            color: var(--text-primary, #fff);
+            margin-bottom: 1rem;
+        }
+
+        .auth-required p {
+            color: var(--text-secondary, #aaa);
+            margin-bottom: 2rem;
+            max-width: 400px;
+        }
+
+        .loading-game {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary, #aaa);
+        }
+
+        .loading-game .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #333;
+            border-top-color: var(--accent-cyan, #00f0c0);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Auth Modal Styles */
+        .auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .auth-modal-content {
+            background: var(--bg-card, #1a1a1a);
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .auth-modal-content h2 {
+            color: var(--text-primary, #fff);
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .auth-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: #252525;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .auth-option:hover {
+            background: #333;
+        }
+
+        .auth-option .icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--accent-cyan, #00f0c0);
+        }
+
+        .auth-option .label {
+            color: var(--text-primary, #fff);
+        }
+
+        .auth-divider {
+            color: var(--text-secondary, #666);
+            margin: 1rem 0;
+            font-size: 0.875rem;
+        }
+
+        .magic-link-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .magic-link-form input {
+            padding: 0.75rem 1rem;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #252525;
+            color: var(--text-primary, #fff);
+            font-size: 1rem;
+        }
+
+        .magic-link-form input:focus {
+            outline: none;
+            border-color: var(--accent-cyan, #00f0c0);
+        }
+
+        .auth-message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .auth-message.success {
+            background: rgba(0, 240, 192, 0.1);
+            color: var(--accent-cyan, #00f0c0);
+        }
+
+        .auth-message.error {
+            background: rgba(255, 51, 102, 0.1);
+            color: var(--accent-red, #ff3366);
+        }
+
+        .auth-modal-close {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: var(--text-secondary, #aaa);
+            cursor: pointer;
+        }
+
+        .auth-modal-close:hover {
+            border-color: #666;
+            color: var(--text-primary, #fff);
+        }
+    </style>
 </head>
 <body>
     <nav>
         <div class="nav-container">
-            <a href="index.html" class="logo">
-                <img src="images/tecvoodoo-logo-small.png" alt="TecVooDoo">
+            <a href="../../index.html" class="logo">
+                <img src="../../images/tecvoodoo-logo-small.png" alt="TecVooDoo">
                 <span>TecVooDoo</span>
             </a>
             <div class="nav-auth" id="nav-auth">
@@ -31,11 +231,11 @@
                 <span></span>
             </div>
             <ul id="nav-menu">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="games.html" class="active">Games</a></li>
-                <li><a href="books.html">Books</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="contact.html">Contact</a></li>
+                <li><a href="../../index.html">Home</a></li>
+                <li><a href="../../games.html" class="active">Games</a></li>
+                <li><a href="../../books.html">Books</a></li>
+                <li><a href="../../about.html">About</a></li>
+                <li><a href="../../contact.html">Contact</a></li>
             </ul>
         </div>
     </nav>
@@ -43,7 +243,7 @@
     <!-- Auth Modal -->
     <div id="auth-modal" class="auth-modal hidden">
         <div class="auth-modal-content">
-            <h2>Sign In</h2>
+            <h2>Sign In to Play</h2>
             <div class="auth-options">
                 <div class="auth-option" onclick="signInWithGoogle()">
                     <div class="icon">G</div>
@@ -69,120 +269,24 @@
         </div>
     </div>
 
-    <main>
-        <div class="page-header">
-            <h1>Games</h1>
-            <p>Word games with guillotines. Shrunken heads on spikes. Norman Rockwell meets Beetlejuice.</p>
+    <!-- Game Container -->
+    <div class="game-wrapper">
+        <!-- Loading State -->
+        <div id="loading-state" class="loading-game">
+            <div class="spinner"></div>
+            <p>Loading...</p>
         </div>
 
-        <div class="container">
-            <!-- Playtesting Section -->
-            <section class="games-section">
-                <h2 class="section-title">Now Playtesting</h2>
-                <p class="section-subtitle">Playable now - help us test and refine these games.</p>
-                <div class="cards-grid">
-                    <!-- Don't Lose Your Head -->
-                    <div class="card">
-                        <div class="card-image">
-                            <img src="images/dlyh-gameplay.png" alt="Don't Lose Your Head Gameplay">
-                        </div>
-                        <div class="card-content">
-                            <h3>Don't Lose Your Head</h3>
-                            <p>Battle wits in this brutal twist on Hangman meets Battleship. Choose your letters wisely - or your head's on the chopping block. PvP or single-player competitive word guessing with grid-based letter selection.</p>
-                            <p style="margin-top: 1rem;">
-                                <span class="status live">Playable</span>
-                            </p>
-                            <p style="margin-top: 1rem;">
-                                <a href="games/dlyh/" class="btn btn-primary">Play Now</a>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Dots and Boxes -->
-                    <div class="card">
-                        <div class="card-image">
-                            <img src="images/dots-boxes-gameplay.png" alt="Dots n Boxes Gameplay">
-                        </div>
-                        <div class="card-content">
-                            <h3>Dots n Boxes</h3>
-                            <p>The classic paper grid game goes digital. Take turns connecting dots to complete boxes and claim them. Async online multiplayer via shareable codes - play with family even when not online at the same time.</p>
-                            <p style="margin-top: 1rem;">
-                                <span class="status live">Playable</span>
-                            </p>
-                            <p style="margin-top: 1rem;">
-                                <a href="games/dots-and-boxes/" class="btn btn-primary">Play Now</a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Coming Soon Section -->
-            <section class="games-section">
-                <h2 class="section-title">Coming Soon</h2>
-                <p class="section-subtitle">Currently in development - stay tuned for release.</p>
-                <div class="cards-grid">
-                    <!-- Shrunken Head Toss -->
-                    <div class="card">
-                        <div class="card-image">
-                            <img src="images/sht-concept.png" alt="Shrunken Head Toss Concept">
-                        </div>
-                        <div class="card-content">
-                            <h3>Shrunken Head Toss</h3>
-                            <p>Toss your friends' faces onto spike pits in this Beetlejuice-inspired party game. Upload your mug, aim the head, and rack up gruesome points. Like cornhole, but with personalized shrunken heads and a distinctly macabre twist.</p>
-                            <p style="margin-top: 1rem;">
-                                <span class="status development">In Development</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Up Next Section -->
-            <section class="games-section">
-                <h2 class="section-title">Up Next</h2>
-                <p class="section-subtitle">In planning - these twisted ideas are next in line.</p>
-                <div class="cards-grid">
-                    <!-- Hooked on Charon -->
-                    <div class="card">
-                        <div class="card-image">
-                            <img src="images/hooked-charon-concept.png" alt="Hooked on Charon Concept">
-                        </div>
-                        <div class="card-content">
-                            <h3>Hooked on Charon</h3>
-                            <p>A cozy low-poly 3D fishing sim set in the Greek Underworld. Play as Charon, the eternal ferryman who just wants to fish in peace - but souls keep interrupting. Ferry the dead (grudgingly), collect obols, and fish the five legendary rivers of Hades.</p>
-                            <p style="margin-top: 1rem;">
-                                <span class="status on-hold">Planning</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- FearSteez -->
-                    <div class="card">
-                        <div class="card-image">
-                            <img src="images/fearsteez-concept.png" alt="FearSteez Concept">
-                        </div>
-                        <div class="card-content">
-                            <h3>FearSteez</h3>
-                            <p>Fight your way to the concert in this rhythm-infused beat-em-up. FearSteez battles thugs, zombies, and weird magic to win Atlanta's respect - powered by music, crowd energy, and a mic cord that hits harder than bars.</p>
-                            <p style="margin-top: 1rem;">
-                                <span class="status on-hold">Planning</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <!-- Auth Required State -->
+        <div id="auth-required-state" class="auth-required hidden">
+            <h2>Sign In Required</h2>
+            <p>Sign in to play Don't Lose Your Head and track your progress across sessions.</p>
+            <button class="btn btn-primary" onclick="showAuthModal()">Sign In</button>
         </div>
-    </main>
 
-    <footer>
-        <div class="footer-subscribe">
-            <p>Get notified about major releases</p>
-            <a href="mailto:updates+subscribe@tecvoodoo.com?subject=Subscribe&body=Send this email to subscribe to TecVooDoo Updates." class="btn btn-outline">Subscribe</a>
-        </div>
-        <p>&copy; 2025 TecVooDoo LLC. All rights reserved.</p>
-        <span class="footer-updated">Updated: Jan 16, 2026</span>
-    </footer>
+        <!-- Game iframe -->
+        <iframe id="game-iframe" class="hidden" src="https://dlyh.pages.dev" allow="fullscreen"></iframe>
+    </div>
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -192,47 +296,10 @@
             document.getElementById('nav-menu').classList.toggle('active');
         }
 
-        // Image lightbox - create dynamically for better mobile support
-        function openLightbox(imgSrc) {
-            var lightbox = document.createElement('div');
-            lightbox.id = 'image-lightbox';
-            lightbox.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
-
-            var img = document.createElement('img');
-            img.src = imgSrc;
-            img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;border-radius:8px;';
-
-            lightbox.appendChild(img);
-            document.body.appendChild(lightbox);
-            document.body.style.overflow = 'hidden';
-
-            lightbox.onclick = function() {
-                document.body.removeChild(lightbox);
-                document.body.style.overflow = '';
-            };
-        }
-
-        // Close on escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                var lightbox = document.getElementById('image-lightbox');
-                if (lightbox) {
-                    document.body.removeChild(lightbox);
-                    document.body.style.overflow = '';
-                }
-            }
-        });
-
-        // Add click handlers to all card images
-        document.querySelectorAll('.card-image img').forEach(function(img) {
-            img.addEventListener('click', function() {
-                openLightbox(this.src);
-            });
-        });
-
         // Supabase config
         const SUPABASE_URL = 'https://api.tecvoodoo.com';
         const SUPABASE_KEY = 'sb_publishable_zwOfLO5ByeqZGS4iZdOw7A_sAlwaA_3';
+        const DLYH_ORIGIN = 'https://dlyh.pages.dev';
 
         // Initialize Supabase
         let supabaseClient = null;
@@ -252,6 +319,67 @@
         } catch (err) {
             console.error('Failed to initialize Supabase:', err);
         }
+
+        // UI Elements
+        const loadingState = document.getElementById('loading-state');
+        const authRequiredState = document.getElementById('auth-required-state');
+        const gameIframe = document.getElementById('game-iframe');
+
+        // Show game state
+        function showState(state) {
+            loadingState.classList.add('hidden');
+            authRequiredState.classList.add('hidden');
+            gameIframe.classList.add('hidden');
+
+            if (state === 'loading') {
+                loadingState.classList.remove('hidden');
+            } else if (state === 'auth-required') {
+                authRequiredState.classList.remove('hidden');
+            } else if (state === 'game') {
+                gameIframe.classList.remove('hidden');
+            }
+        }
+
+        // Send user info to iframe
+        function sendUserInfoToGame() {
+            if (!currentUser || !gameIframe.contentWindow) return;
+
+            const userInfo = {
+                type: 'TECVOODOO_AUTH',
+                user: {
+                    id: currentUser.id,
+                    email: currentUser.email || null,
+                    isAnonymous: currentUser.is_anonymous || false,
+                    displayName: currentUser.user_metadata?.full_name ||
+                                 currentUser.user_metadata?.name ||
+                                 currentUser.email?.split('@')[0] ||
+                                 'Guest'
+                }
+            };
+
+            gameIframe.contentWindow.postMessage(userInfo, DLYH_ORIGIN);
+        }
+
+        // When iframe loads, send user info
+        gameIframe.addEventListener('load', function() {
+            if (currentUser) {
+                // Small delay to ensure iframe is ready
+                setTimeout(sendUserInfoToGame, 500);
+            }
+        });
+
+        // Listen for messages from iframe
+        window.addEventListener('message', function(event) {
+            if (event.origin !== DLYH_ORIGIN) return;
+
+            if (event.data.type === 'DLYH_READY') {
+                // Game is ready to receive auth info
+                sendUserInfoToGame();
+            } else if (event.data.type === 'DLYH_REQUEST_AUTH') {
+                // Game is requesting auth info
+                sendUserInfoToGame();
+            }
+        });
 
         // Auth UI functions
         function showAuthModal() {
@@ -283,9 +411,12 @@
                 } else {
                     userEmailEl.textContent = currentUser.email || 'User';
                 }
+                showState('game');
+                sendUserInfoToGame();
             } else {
                 signedOutEl.classList.remove('hidden');
                 signedInEl.classList.add('hidden');
+                showState('auth-required');
             }
         }
 
@@ -372,7 +503,10 @@
 
         // Initialize auth
         async function initAuth() {
-            if (!supabaseClient) return;
+            if (!supabaseClient) {
+                showState('auth-required');
+                return;
+            }
 
             // Check for OAuth tokens in URL hash
             const hash = window.location.hash;
@@ -416,6 +550,8 @@
                     if (session) {
                         currentUser = session.user;
                         updateAuthUI();
+                    } else {
+                        showState('auth-required');
                     }
                 }
             });
@@ -425,10 +561,13 @@
                 const { data: { user }, error } = await supabaseClient.auth.getUser();
                 if (!error && user) {
                     currentUser = user;
+                    updateAuthUI();
+                } else {
+                    showState('auth-required');
                 }
-                updateAuthUI();
             } catch (err) {
                 console.error('Error getting user:', err);
+                showState('auth-required');
             }
         }
 

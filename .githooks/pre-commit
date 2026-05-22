@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# pre-commit hook: auto-update footer "Updated: ..." date on production HTML files.
+#
+# Touches any staged file under site/ that contains a <span class="footer-updated">
+# element. Rewrites the date inside the span to today's date and re-stages the file.
+#
+# Activation (one-time per clone):
+#   git config core.hooksPath .githooks
+#
+# See E:\TecVooDoo\Projects\Documents\Canonical\Web\TecVooDoo_Web_Workflow.md
+# (Footer Updates section) for the rule this hook enforces.
+#
+# Installed: 2026-05-22
+
+set -e
+
+# Date format: "Mon D, YYYY" with non-padded day (e.g., "May 22, 2026", "Jan 4, 2026").
+# %-d is GNU-only; fall back by stripping a leading zero from %d.
+today=$(date +"%b %-d, %Y" 2>/dev/null || date +"%b %d, %Y" | sed 's/ 0/ /')
+
+# Get staged (Added/Copied/Modified) HTML files under site/.
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^site/.*\.html$' || true)
+
+if [ -z "$files" ]; then
+    exit 0
+fi
+
+for f in $files; do
+    # Skip files that don't have the footer span (e.g., auth-test.html, dlyh wrapper).
+    if ! grep -q '<span class="footer-updated">Updated:' "$f"; then
+        continue
+    fi
+
+    # Replace the existing date with today's. sed -i with a backup suffix is the
+    # portable form across GNU and BSD sed; we remove the .bak immediately.
+    if sed -i.bak -E "s|(<span class=\"footer-updated\">Updated:)[^<]*(</span>)|\1 ${today}\2|" "$f"; then
+        rm -f "${f}.bak"
+        git add "$f"
+        echo "pre-commit: footer date -> $today  ($f)"
+    else
+        rm -f "${f}.bak"
+        echo "pre-commit: WARNING failed to rewrite footer in $f" >&2
+    fi
+done
+
+exit 0

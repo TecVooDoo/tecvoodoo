@@ -5,7 +5,7 @@
 **Platform:** Web (HTML5/CSS/JavaScript) + Supabase + Cloudflare
 **Source:** `E:\TecVooDoo\TecVooDooSite`
 **Live URL:** https://tecvoodoo.com
-**Document Version:** 4
+**Document Version:** 5
 **Last Updated:** May 30, 2026
 
 ---
@@ -31,7 +31,9 @@ Code patterns, bug patterns to avoid, deployment pipeline, OAuth setup details, 
 
 **Current Phase:** Live / Maintenance
 
-**Last Session (2026-05-30):** TVD studio reorg + doc-system buildout. No site code changes. Triggered by a cold-start failure earlier the same day: Rune opened a fresh chat to continue Cloudflare work, and the new agent couldn't recover state from memory alone — Status doc wasn't doing its job. Outcome: (1) Flat TVD studio structure replacing the nested `Projects\` collar; site repo at `TecVooDooSite\` now a subfolder of the studio root, with workspace-level `.claude\` + `.mcp.json` at `E:\TecVooDoo\`. (2) Repo gained `CLAUDE.md` at root + `Documents\` (this Status doc, renamed from `TecVooDoo_Web_Status.md`) + `Documents\Archives\` (49 archived TV_*/Supabase_* design docs flattened from the old nested location). (3) Canonical layer relocated to `Studio\Canonical\Web\`, gained 4 new Tier 2 PerProject_* docs (DocSystem spec, StatusTemplate, Adoption Prompt, MCP Brief). (4) Studio orientation doc at `Studio\INDEX.md`. (5) Cloudflare work that triggered this session was NOT done — still on the Active TODO list as it was at start.
+**Last Session (2026-05-30, PM):** Resend API key leak remediation. GitGuardian flagged a live Resend API key committed during the AM reorg -- the doc migration swept in `Documents/Archives/ResendAPI.txt` (a plaintext credentials file) in commit `816306b`. Revoked + rotated the key (new key deployed to the email Worker secret `RESEND_API_KEY`, redeploy verified by a real 200 send through the Dots and Boxes invite), then purged the file from all git history (`filter-branch`) and force-pushed `main` (`50a5eb9` -> `64f151c`); `origin/main` verified clean of the file and key string. Confirmed beta-reader signups are fully retired -- the DAB "Email a friend" invite is now the ONLY consumer of the Resend Worker. The contact form uses `mailto:` and never touched Resend. No site code changes. Caveat: GitHub may keep the old commit reachable by direct SHA in cache until its own GC; inert since the key is revoked. Follow-ups on Active TODO.
+
+**Prior session (2026-05-30, AM):** TVD studio reorg + doc-system buildout. No site code changes. Triggered by a cold-start failure earlier the same day: Rune opened a fresh chat to continue Cloudflare work, and the new agent couldn't recover state from memory alone — Status doc wasn't doing its job. Outcome: (1) Flat TVD studio structure replacing the nested `Projects\` collar; site repo at `TecVooDooSite\` now a subfolder of the studio root, with workspace-level `.claude\` + `.mcp.json` at `E:\TecVooDoo\`. (2) Repo gained `CLAUDE.md` at root + `Documents\` (this Status doc, renamed from `TecVooDoo_Web_Status.md`) + `Documents\Archives\` (49 archived TV_*/Supabase_* design docs flattened from the old nested location). (3) Canonical layer relocated to `Studio\Canonical\Web\`, gained 4 new Tier 2 PerProject_* docs (DocSystem spec, StatusTemplate, Adoption Prompt, MCP Brief). (4) Studio orientation doc at `Studio\INDEX.md`. (5) Cloudflare work that triggered this session was NOT done — still on the Active TODO list as it was at start.
 
 **Pre-session backstory (2026-05-22):** Post-crash recovery (C: drive crashed earlier that day) and large documentation cleanup. Restored MCP server connectivity (Cloudflare 503 incident plus zombie mcp-remote process cleanup), fixed `safe.directory` git config that was lost with the C: drive, refreshed all production footers, and built out the new `Canonical/Web/` doc layer to dedupe rules triplicated across `TecVooDoo_AI_Rules.md`, this Status doc, and DAB_Status.md.
 
@@ -40,6 +42,9 @@ Code patterns, bug patterns to avoid, deployment pipeline, OAuth setup details, 
 ## Active TODO
 
 ### Immediate
+- [ ] Add secret-scanning (`gitleaks`) + a `*API*.txt` / `*.key` / `.env` ignore rule to `.githooks/pre-commit` -- would have caught the `ResendAPI.txt` leak before it pushed
+- [ ] Resolve the GitGuardian Resend alert in the dashboard (now that the key is revoked)
+- [ ] Rotate + scrub the older **ElevenLabs API key** flagged in `TecVooDoo/M3AnimatedSeries` (GitGuardian alert 2026-05-11, still open)
 - [ ] Move Supabase migrations into a version-controlled folder (currently SQL Editor only)
 - [ ] Newsletter subscription: replace `mailto:updates+subscribe@tecvoodoo.com` placeholders with a Supabase-backed signup
 
@@ -194,7 +199,15 @@ Duplicate signups (same email + same book) surface as PostgreSQL error 23505; th
 
 ## Recent Session History
 
-### 2026-05-30 -- TVD studio reorg + doc-system buildout
+### 2026-05-30 (PM) -- Resend API key leak remediation
+- **Triggered by:** a GitGuardian email ("[TecVooDoo/tecvoodoo] Resend API Key exposed on GitHub", pushed 2026-05-30 13:00:54 UTC). The AM reorg's doc migration had committed `Documents/Archives/ResendAPI.txt` -- a one-line plaintext file holding the live Resend key `re_STPmUe7R...` -- in commit `816306b`.
+- **Diagnosis:** the key was tracked in exactly one commit; no other credential files or secrets in the repo. The contact form (`contact.html`) is `mailto:`-based and never used Resend. Beta-reader signups (the original Resend justification) are fully retired -- grep finds no `beta_readers` UI anywhere in `site/`. The **only** live consumer of the Worker is the Dots and Boxes "Email a friend" invite ([games/dots-and-boxes/index.html:2764](../site/games/dots-and-boxes/index.html#L2764)).
+- **Remediation:** (1) created a new Resend key + revoked the old `re_STPmUe7R...`; (2) rotated the Cloudflare Worker secret `RESEND_API_KEY` and redeployed (`tecvoodoo-email`, script version `e1315631`); (3) verified via Workers observability -- a real DAB invite produced `POST / -> 200`; (4) purged `ResendAPI.txt` from all history with `git filter-branch`, force-pushed `main` (`50a5eb9` -> `64f151c`), pruned local orphans; (5) confirmed `origin/main` carries zero references to the file or key string.
+- **Caveat:** GitHub may still serve the old commit `816306b` by direct SHA from cache until its own GC runs; the key is revoked so that copy is inert. Full eviction would need a GitHub Support GC request -- not worth it.
+- **Permissions note:** the force-push was soft-blocked by the auto-mode classifier (history rewrite is destructive); cleared by explicit user authorization. An agent cannot edit its own `.claude/settings.local.json` to grant force-push -- that is a hard self-modification block, so the allowlist edit is always a user action.
+- **Outstanding (on Active TODO):** add `gitleaks` + secret-file ignores to the pre-commit hook; resolve the GitGuardian alert; rotate + scrub the older ElevenLabs key in `M3AnimatedSeries`.
+
+### 2026-05-30 (AM) -- TVD studio reorg + doc-system buildout
 - **Triggered by:** a cold-start agent failure earlier the same day — Rune opened a fresh chat to continue Cloudflare work; the agent couldn't recover where the prior session left off from memory alone. Diagnosed as a Status doc + studio structure problem, not an agent problem.
 - **NO site code changes.** This was entirely a docs + filesystem reorg session.
 - **Studio reorg:** flattened `E:\TecVooDoo\` from a nested `Projects\Documents\`, `Projects\Games\`, `Projects\Writing\`, `Projects\Other\TecVooDooWebsite\` structure into top-level `Studio\`, `Games\`, `Writing\`, `Retired\`, with the site repo `TecVooDooSite\` as a co-equal subfolder. `E:\Personal\` was carved out for non-TVD personal content. HumiliNation snapshot deleted entirely (423 MB recovered; GitHub mirror is authoritative). Synthosapians + The Nexus Party consolidated under `Retired\Synthosapians_NexusParty\`.
@@ -235,6 +248,7 @@ Duplicate signups (same email + same book) surface as PostgreSQL error 23505; th
 
 | Version | Date | Summary |
 |---------|------|---------|
+| 5 | 2026-05-30 | Resend API key leak remediation: revoked + rotated the key, purged `ResendAPI.txt` from git history (force-push `64f151c`), verified `origin/main` clean. Prevention TODOs added (gitleaks pre-commit, ElevenLabs/M3AnimatedSeries follow-up). No site code changes. |
 | 4 | 2026-05-30 | TVD studio reorg + doc-system buildout. Doc moved into repo (renamed from TecVooDoo_Web_Status.md), canonical paths rewritten, CLAUDE.md + Studio\INDEX.md + 4 Canonical Tier 2 PerProject_* docs added. No site code changes. |
 | 3 | 2026-05-22 | Post-crash session: rules/patterns/lessons extracted to new `Canonical/Web/` layer; this doc slimmed to state-only. Footers updated across 9 production HTML files. Recent Session History expanded to cover the gap since v2. |
 | 2 | 2026-01-25 | Fixed DLYH iframe height offset (top: 60px -> 72px) |

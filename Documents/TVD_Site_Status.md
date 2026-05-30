@@ -5,8 +5,8 @@
 **Platform:** Web (HTML5/CSS/JavaScript) + Supabase + Cloudflare
 **Source:** `E:\TecVooDoo\TecVooDooSite`
 **Live URL:** https://tecvoodoo.com
-**Document Version:** 3
-**Last Updated:** May 22, 2026
+**Document Version:** 4
+**Last Updated:** May 30, 2026
 
 ---
 
@@ -31,7 +31,9 @@ Code patterns, bug patterns to avoid, deployment pipeline, OAuth setup details, 
 
 **Current Phase:** Live / Maintenance
 
-**Last Session (2026-05-22):** Post-crash recovery (C: drive crashed earlier this day) and large documentation cleanup. Restored MCP server connectivity (Cloudflare 503 incident plus zombie mcp-remote process cleanup), fixed `safe.directory` git config that was lost with the C: drive, refreshed all production footers (8 of 9 had been showing dates from Dec 2025 / Jan 2026 with `© 2025`), and built out the new `Canonical/Web/` doc layer (Standards + Workflow) to dedupe rules that had been triplicated across `TecVooDoo_AI_Rules.md`, this Status doc, and DAB_Status.md. Bumped this doc to v3 with rules/patterns extracted to the canonical.
+**Last Session (2026-05-30):** TVD studio reorg + doc-system buildout. No site code changes. Triggered by a cold-start failure earlier the same day: Rune opened a fresh chat to continue Cloudflare work, and the new agent couldn't recover state from memory alone — Status doc wasn't doing its job. Outcome: (1) Flat TVD studio structure replacing the nested `Projects\` collar; site repo at `TecVooDooSite\` now a subfolder of the studio root, with workspace-level `.claude\` + `.mcp.json` at `E:\TecVooDoo\`. (2) Repo gained `CLAUDE.md` at root + `Documents\` (this Status doc, renamed from `TecVooDoo_Web_Status.md`) + `Documents\Archives\` (49 archived TV_*/Supabase_* design docs flattened from the old nested location). (3) Canonical layer relocated to `Studio\Canonical\Web\`, gained 4 new Tier 2 PerProject_* docs (DocSystem spec, StatusTemplate, Adoption Prompt, MCP Brief). (4) Studio orientation doc at `Studio\INDEX.md`. (5) Cloudflare work that triggered this session was NOT done — still on the Active TODO list as it was at start.
+
+**Pre-session backstory (2026-05-22):** Post-crash recovery (C: drive crashed earlier that day) and large documentation cleanup. Restored MCP server connectivity (Cloudflare 503 incident plus zombie mcp-remote process cleanup), fixed `safe.directory` git config that was lost with the C: drive, refreshed all production footers, and built out the new `Canonical/Web/` doc layer to dedupe rules triplicated across `TecVooDoo_AI_Rules.md`, this Status doc, and DAB_Status.md.
 
 ---
 
@@ -110,8 +112,12 @@ Infra IDs, OAuth setup, and Worker payload shapes live in [TecVooDoo_Web_Workflo
 ```
 E:\TecVooDoo\TecVooDooSite\
   .git/                                # GitHub: TecVooDoo/tecvoodoo
-  .mcp.json                            # Supabase + Cloudflare MCP server config
   .gitignore
+  .githooks/pre-commit                 # Auto-update footer dates on commit
+  CLAUDE.md                            # Agent orientation for the site repo (added 2026-05-30)
+  Documents/                           # Per-project doc folder (added 2026-05-30)
+    TVD_Site_Status.md                 # This doc
+    Archives/                          # 49 historical TV_*/Supabase_* design docs (v1-v8, Dec 2025 - Jan 2026)
   site/                                # Cloudflare Pages serves this directory
     index.html
     about.html, books.html, contact.html, games.html, privacy.html
@@ -127,6 +133,8 @@ E:\TecVooDoo\TecVooDooSite\
     robots.txt
     sitemap.xml
 ```
+
+**Workspace config** (`.claude\`, `.mcp.json`) lives at the studio root `E:\TecVooDoo\`, not in this repo. The MCP topology (Supabase + 8 Cloudflare servers + Discord) is studio-wide. See [PerProject_MCP_Brief.md](../../Studio/Canonical/Web/PerProject_MCP_Brief.md).
 
 ### External Dashboards
 
@@ -186,6 +194,18 @@ Duplicate signups (same email + same book) surface as PostgreSQL error 23505; th
 
 ## Recent Session History
 
+### 2026-05-30 -- TVD studio reorg + doc-system buildout
+- **Triggered by:** a cold-start agent failure earlier the same day — Rune opened a fresh chat to continue Cloudflare work; the agent couldn't recover where the prior session left off from memory alone. Diagnosed as a Status doc + studio structure problem, not an agent problem.
+- **NO site code changes.** This was entirely a docs + filesystem reorg session.
+- **Studio reorg:** flattened `E:\TecVooDoo\` from a nested `Projects\Documents\`, `Projects\Games\`, `Projects\Writing\`, `Projects\Other\TecVooDooWebsite\` structure into top-level `Studio\`, `Games\`, `Writing\`, `Retired\`, with the site repo `TecVooDooSite\` as a co-equal subfolder. `E:\Personal\` was carved out for non-TVD personal content. HumiliNation snapshot deleted entirely (423 MB recovered; GitHub mirror is authoritative). Synthosapians + The Nexus Party consolidated under `Retired\Synthosapians_NexusParty\`.
+- **Site repo gained:** `CLAUDE.md` at root (agent orientation), `Documents\TVD_Site_Status.md` (renamed from `TecVooDoo_Web_Status.md` at the old `Projects\Other\TecVooDooWebsite\Documents\` location), `Documents\Archives\` with 49 flattened archived design docs (27 TV_* + 22 Supabase_*). Two commits on `main`: `816306b` Migrate web docs into repo, `cebfc09` Add CLAUDE.md for agent orientation. Pushed to `origin/main`.
+- **Canonical layer:** relocated from `Projects\Documents\Canonical\` to `Studio\Canonical\` (was a Phase 4 atomic move with backup zip). Canonical references in this Status doc, `DAB_Status.md`, `TVD_MarketingStrategy.md`, and `Studio\TVD_AI_Rules.md` all rewritten in the same batch. Added 4 Tier 2 docs to `Studio\Canonical\Web\`: `PerProject_DocSystem.md` (spec), `PerProject_StatusTemplate.md` (skeleton), `PerProject_Adoption_Prompt.md` (retrofit walkthrough), `PerProject_MCP_Brief.md` (per-project MCP quick-ref).
+- **Studio orientation:** new `Studio\INDEX.md` for cold-start agents landing studio-wide. `TecVooDoo_Projects.csv` bulk-updated to reflect post-reorg paths.
+- **Permissions:** `E:\TecVooDoo\.claude\settings.local.json` expanded from 6 to 90 allowlist entries (WebSearch, dev-domain WebFetch, read-only MCP tools across Supabase / Cloudflare / Discord, git push/pull/gh CLI). Standing authorization to push `main` without per-push confirmation. Reload VSCode workspace for the settings to take effect.
+- **Memory:** 4 new memory entries (`reference_unity_workspaces`, `reference_windows_reserved_name_files`, `feedback_push_to_main_authorized`, `feedback_doc_system_purpose`); 8 existing entries updated with new paths.
+- **Google Drive coverage:** now sync covers the entire `E:\TecVooDoo\` root (was only `Projects\` pre-reorg).
+- **What did NOT happen:** the Cloudflare work that originally triggered the fresh chat. Still on Active TODO. Reorg plan archived at `E:\TecVooDoo\Studio\Archives\TVD_StudioReorgPlan.md` for forensic reference.
+
 ### 2026-05-22 -- Post-crash recovery + canonical doc cleanup
 - C: drive crashed earlier in the day; Claude memory and global git config were wiped. Project files on E: were intact.
 - Cloudflare had an active API/Dashboard 503 incident at the same time -- separate from the local crash, but compounded the troubleshooting: MCP OAuth flows for the 7 Cloudflare servers all failed silently because OAuth callbacks couldn't land.
@@ -215,6 +235,7 @@ Duplicate signups (same email + same book) surface as PostgreSQL error 23505; th
 
 | Version | Date | Summary |
 |---------|------|---------|
+| 4 | 2026-05-30 | TVD studio reorg + doc-system buildout. Doc moved into repo (renamed from TecVooDoo_Web_Status.md), canonical paths rewritten, CLAUDE.md + Studio\INDEX.md + 4 Canonical Tier 2 PerProject_* docs added. No site code changes. |
 | 3 | 2026-05-22 | Post-crash session: rules/patterns/lessons extracted to new `Canonical/Web/` layer; this doc slimmed to state-only. Footers updated across 9 production HTML files. Recent Session History expanded to cover the gap since v2. |
 | 2 | 2026-01-25 | Fixed DLYH iframe height offset (top: 60px -> 72px) |
 | 1 | 2026-01-05 | Initial consolidated document (replaces TV v8 + Supabase v6) |

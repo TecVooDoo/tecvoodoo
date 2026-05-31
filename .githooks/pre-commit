@@ -47,7 +47,9 @@ for f in $staged; do
             ;;
     esac
     # Scan the staged blob content for credential token shapes.
-    if git show ":$f" 2>/dev/null | grep -Eq 're_[A-Za-z0-9_-]{20,}|sk_[A-Za-z0-9]{32,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xi-api-key|-----BEGIN [A-Z ]*PRIVATE KEY-----'; then
+    # Match credential token VALUES (high-entropy shapes), not header/field
+    # names like "xi-api-key" -- those are noisy false positives in docs/config.
+    if git show ":$f" 2>/dev/null | grep -Eq 're_[A-Za-z0-9_-]{20,}|sk_[A-Za-z0-9]{32,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----'; then
         echo "pre-commit: BLOCKED likely secret in content: $f" >&2
         secret_hit=1
     fi

@@ -45,7 +45,7 @@ Code patterns, bug patterns to avoid, deployment pipeline, OAuth setup details, 
 
 ### Immediate
 - [x] (2026-05-31) Secret-scanning + secret-file ignores added to `.githooks/pre-commit` + `.gitignore` (commit `1815892`). gitleaks not installed; hook uses a dependency-free content scan and layers gitleaks only if present.
-- [ ] Resolve **both** GitGuardian alerts in the dashboard -- Resend + ElevenLabs keys are now revoked, so both can be closed as "revoked" (Rune, dashboard)
+- [x] (2026-05-31) Both GitGuardian alerts (Resend + ElevenLabs) resolved/closed as "revoked" -- both keys are dead.
 - [ ] **M3 ElevenLabs scrub -- do from an M3 session** (cross-project push rule): key already rotated + revoked 2026-05-31; M3's `.gitignore` already edited (left UNSTAGED) to drop `.mcp.json` + `.claude/mcp.json`. Remaining: paste new key into the local (now-untracked) files, `git rm --cached .mcp.json .claude/mcp.json`, commit, scrub the key from history (`git filter-repo --path .mcp.json --path .claude/mcp.json --invert-paths`), force-push `origin/master`.
 - [ ] Move Supabase migrations into a version-controlled folder (currently SQL Editor only)
 - [ ] Newsletter subscription: replace `mailto:updates+subscribe@tecvoodoo.com` placeholders with a Supabase-backed signup

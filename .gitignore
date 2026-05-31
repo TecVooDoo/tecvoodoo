@@ -1,3 +1,12 @@
 tmpclaude-*
 .claude/
 .mcp.json
+
+# Secrets -- never commit (added 2026-05-31 after Resend key leak remediation)
+.env
+*.env
+*.key
+*.pem
+*API*.txt
+credentials*.json
+*secret*.txt

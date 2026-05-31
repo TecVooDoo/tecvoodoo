@@ -15,6 +15,56 @@
 
 set -e
 
+# ---------------------------------------------------------------------------
+# Secret scan (added 2026-05-31 after the Resend API key leak).
+# Dependency-free: blocks staged files by name pattern and scans staged
+# content for known credential token shapes. If gitleaks is on PATH it also
+# runs `gitleaks protect --staged` as a second, broader layer.
+# Override an intentional commit with: git commit --no-verify
+# ---------------------------------------------------------------------------
+secret_hit=0
+
+staged=$(git diff --cached --name-only --diff-filter=ACM || true)
+
+for f in $staged; do
+    # This hook itself contains the detection signatures -- never scan it.
+    if [ "$f" = ".githooks/pre-commit" ]; then
+        continue
+    fi
+    base=$(basename "$f")
+    case "$base" in
+        .env|*.env|*.key|*.pem|credentials*.json|*secret*.txt)
+            echo "pre-commit: BLOCKED secret-file name: $f" >&2
+            secret_hit=1
+            continue
+            ;;
+    esac
+    case "$base" in
+        *API*.txt)
+            echo "pre-commit: BLOCKED secret-file name: $f" >&2
+            secret_hit=1
+            continue
+            ;;
+    esac
+    # Scan the staged blob content for credential token shapes.
+    if git show ":$f" 2>/dev/null | grep -Eq 're_[A-Za-z0-9_-]{20,}|sk_[A-Za-z0-9]{32,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xi-api-key|-----BEGIN [A-Z ]*PRIVATE KEY-----'; then
+        echo "pre-commit: BLOCKED likely secret in content: $f" >&2
+        secret_hit=1
+    fi
+done
+
+if command -v gitleaks >/dev/null 2>&1; then
+    if ! gitleaks protect --staged --no-banner >/dev/null 2>&1; then
+        echo "pre-commit: BLOCKED by gitleaks (staged secret detected)" >&2
+        secret_hit=1
+    fi
+fi
+
+if [ "$secret_hit" -ne 0 ]; then
+    echo "pre-commit: secret scan failed -- commit aborted. Use 'git commit --no-verify' to override if this is a false positive." >&2
+    exit 1
+fi
+
 # Date format: "Mon D, YYYY" with non-padded day (e.g., "May 22, 2026", "Jan 4, 2026").
 # %-d is GNU-only; fall back by stripping a leading zero from %d.
 today=$(date +"%b %-d, %Y" 2>/dev/null || date +"%b %d, %Y" | sed 's/ 0/ /')

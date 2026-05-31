@@ -5,8 +5,8 @@
 **Platform:** Web (HTML5/CSS/JavaScript) + Supabase + Cloudflare
 **Source:** `E:\TecVooDoo\TecVooDooSite`
 **Live URL:** https://tecvoodoo.com
-**Document Version:** 5
-**Last Updated:** May 30, 2026
+**Document Version:** 6
+**Last Updated:** May 31, 2026
 
 ---
 
@@ -31,9 +31,11 @@ Code patterns, bug patterns to avoid, deployment pipeline, OAuth setup details, 
 
 **Current Phase:** Live / Maintenance
 
-**Last Session (2026-05-30, PM):** Resend API key leak remediation. GitGuardian flagged a live Resend API key committed during the AM reorg -- the doc migration swept in `Documents/Archives/ResendAPI.txt` (a plaintext credentials file) in commit `816306b`. Revoked + rotated the key (new key deployed to the email Worker secret `RESEND_API_KEY`, redeploy verified by a real 200 send through the Dots and Boxes invite), then purged the file from all git history (`filter-branch`) and force-pushed `main` (`50a5eb9` -> `64f151c`); `origin/main` verified clean of the file and key string. Confirmed beta-reader signups are fully retired -- the DAB "Email a friend" invite is now the ONLY consumer of the Resend Worker. The contact form uses `mailto:` and never touched Resend. No site code changes. Caveat: GitHub may keep the old commit reachable by direct SHA in cache until its own GC; inert since the key is revoked. Follow-ups on Active TODO.
+**Last Session (2026-05-31):** Leak follow-ups + Cloudflare hardening. (1) Built the prevention layer the Resend leak called for: a dependency-free secret scanner in the site repo's `.githooks/pre-commit` (blocks secret-file name patterns + scans staged content for credential token shapes -- Resend `re_`, ElevenLabs/OpenAI `sk_`/`sk-`, AWS `AKIA`, `xi-api-key`, PEM private keys; layers `gitleaks` only if present, since it is NOT installed), plus `.gitignore` rules (`.env`/`*.key`/`*.pem`/`*API*.txt`/`credentials*.json`/`*secret*.txt`). Verified blocking with decoys. Commit `1815892`. (2) ElevenLabs key leak in the **separate `M3AnimatedSeries` repo**: the live key was tracked inline in `.mcp.json` + `.claude/mcp.json` (HEAD + history `774a88e` + pushed to `origin/master`); root cause was M3's `.gitignore` whitelisting those files. Rune rotated + revoked the key (now inert). Edited M3's `.gitignore` to stop tracking them -- left UNSTAGED in M3's working tree per the cross-project push rule; the M3 session must `git rm --cached` + commit + scrub history + force-push (checklist below). (3) Cloudflare: the long-lost "deferred CF work" turned out to be 4 zone security insights for tecvoodoo.com (zone `75d5d0f937fa670879de6906f35277c8`, **Pro plan**). Added `/.well-known/security.txt` (RFC 9116, commit `7f830bb`), closing the Low security.txt insight; the other 3 are dashboard toggles for Rune (see Cloudflare TODO). Both GitGuardian alerts (Resend + ElevenLabs) are now resolvable since both keys are revoked. No production HTML changed.
 
-**Prior session (2026-05-30, AM):** TVD studio reorg + doc-system buildout. No site code changes. Triggered by a cold-start failure earlier the same day: Rune opened a fresh chat to continue Cloudflare work, and the new agent couldn't recover state from memory alone — Status doc wasn't doing its job. Outcome: (1) Flat TVD studio structure replacing the nested `Projects\` collar; site repo at `TecVooDooSite\` now a subfolder of the studio root, with workspace-level `.claude\` + `.mcp.json` at `E:\TecVooDoo\`. (2) Repo gained `CLAUDE.md` at root + `Documents\` (this Status doc, renamed from `TecVooDoo_Web_Status.md`) + `Documents\Archives\` (49 archived TV_*/Supabase_* design docs flattened from the old nested location). (3) Canonical layer relocated to `Studio\Canonical\Web\`, gained 4 new Tier 2 PerProject_* docs (DocSystem spec, StatusTemplate, Adoption Prompt, MCP Brief). (4) Studio orientation doc at `Studio\INDEX.md`. (5) Cloudflare work that triggered this session was NOT done — still on the Active TODO list as it was at start.
+**Prior session (2026-05-30, PM):** Resend API key leak remediation. GitGuardian flagged a live Resend API key committed during the AM reorg -- the doc migration swept in `Documents/Archives/ResendAPI.txt` (a plaintext credentials file) in commit `816306b`. Revoked + rotated the key (new key deployed to the email Worker secret `RESEND_API_KEY`, redeploy verified by a real 200 send through the Dots and Boxes invite), then purged the file from all git history (`filter-branch`) and force-pushed `main` (`50a5eb9` -> `64f151c`); `origin/main` verified clean of the file and key string. Confirmed beta-reader signups are fully retired -- the DAB "Email a friend" invite is now the ONLY consumer of the Resend Worker. The contact form uses `mailto:` and never touched Resend. No site code changes. Caveat: GitHub may keep the old commit reachable by direct SHA in cache until its own GC; inert since the key is revoked. Follow-ups on Active TODO.
+
+**Earlier same day (2026-05-30, AM):** TVD studio reorg + doc-system buildout. No site code changes. Triggered by a cold-start failure earlier the same day: Rune opened a fresh chat to continue Cloudflare work, and the new agent couldn't recover state from memory alone — Status doc wasn't doing its job. Outcome: (1) Flat TVD studio structure replacing the nested `Projects\` collar; site repo at `TecVooDooSite\` now a subfolder of the studio root, with workspace-level `.claude\` + `.mcp.json` at `E:\TecVooDoo\`. (2) Repo gained `CLAUDE.md` at root + `Documents\` (this Status doc, renamed from `TecVooDoo_Web_Status.md`) + `Documents\Archives\` (49 archived TV_*/Supabase_* design docs flattened from the old nested location). (3) Canonical layer relocated to `Studio\Canonical\Web\`, gained 4 new Tier 2 PerProject_* docs (DocSystem spec, StatusTemplate, Adoption Prompt, MCP Brief). (4) Studio orientation doc at `Studio\INDEX.md`. (5) Cloudflare work that triggered this session was NOT done — still on the Active TODO list as it was at start.
 
 **Pre-session backstory (2026-05-22):** Post-crash recovery (C: drive crashed earlier that day) and large documentation cleanup. Restored MCP server connectivity (Cloudflare 503 incident plus zombie mcp-remote process cleanup), fixed `safe.directory` git config that was lost with the C: drive, refreshed all production footers, and built out the new `Canonical/Web/` doc layer to dedupe rules triplicated across `TecVooDoo_AI_Rules.md`, this Status doc, and DAB_Status.md.
 
@@ -42,11 +44,18 @@ Code patterns, bug patterns to avoid, deployment pipeline, OAuth setup details, 
 ## Active TODO
 
 ### Immediate
-- [ ] Add secret-scanning (`gitleaks`) + a `*API*.txt` / `*.key` / `.env` ignore rule to `.githooks/pre-commit` -- would have caught the `ResendAPI.txt` leak before it pushed
-- [ ] Resolve the GitGuardian Resend alert in the dashboard (now that the key is revoked)
-- [ ] Rotate + scrub the older **ElevenLabs API key** flagged in `TecVooDoo/M3AnimatedSeries` (GitGuardian alert 2026-05-11, still open)
+- [x] (2026-05-31) Secret-scanning + secret-file ignores added to `.githooks/pre-commit` + `.gitignore` (commit `1815892`). gitleaks not installed; hook uses a dependency-free content scan and layers gitleaks only if present.
+- [ ] Resolve **both** GitGuardian alerts in the dashboard -- Resend + ElevenLabs keys are now revoked, so both can be closed as "revoked" (Rune, dashboard)
+- [ ] **M3 ElevenLabs scrub -- do from an M3 session** (cross-project push rule): key already rotated + revoked 2026-05-31; M3's `.gitignore` already edited (left UNSTAGED) to drop `.mcp.json` + `.claude/mcp.json`. Remaining: paste new key into the local (now-untracked) files, `git rm --cached .mcp.json .claude/mcp.json`, commit, scrub the key from history (`git filter-repo --path .mcp.json --path .claude/mcp.json --invert-paths`), force-push `origin/master`.
 - [ ] Move Supabase migrations into a version-controlled folder (currently SQL Editor only)
 - [ ] Newsletter subscription: replace `mailto:updates+subscribe@tecvoodoo.com` placeholders with a Supabase-backed signup
+
+### Cloudflare zone security (tecvoodoo.com -- zone `75d5d0f937fa670879de6906f35277c8`, Pro plan)
+The 4 Cloudflare security insights recovered 2026-05-31 -- these were the long-unrecorded "deferred CF work" from the cold-start session:
+- [x] security.txt configured -- `/.well-known/security.txt` added (RFC 9116, commit `7f830bb`)
+- [ ] **Critical: deploy WAF Managed Rules** (Security -> WAF -> Managed rules -> Cloudflare Managed Ruleset; optionally OWASP Core Ruleset)
+- [ ] Moderate: enable Super Bot Fight Mode (Security -> Bots). CAVEAT: zone-wide -- verify `api.tecvoodoo.com` (Supabase custom domain) is DNS-only / grey-cloud first, or game API + WebSocket traffic may get challenged
+- [ ] Low: enable AI Labyrinth (Security -> Bots)
 
 ### Soon
 - [ ] Add analytics (Plausible or Fathom)
@@ -199,6 +208,12 @@ Duplicate signups (same email + same book) surface as PostgreSQL error 23505; th
 
 ## Recent Session History
 
+### 2026-05-31 -- Leak follow-ups + Cloudflare hardening
+- **Prevention layer (the Resend follow-up):** added a dependency-free secret scanner to the site repo's `.githooks/pre-commit` -- blocks staged files by secret-file name pattern and greps staged blob content for credential token shapes (`re_`, `sk_`, `sk-`, `AKIA`, `xi-api-key`, PEM private-key headers); runs `gitleaks protect --staged` as a second layer only if gitleaks is on PATH (it is NOT installed on this machine). The hook excludes itself from the content scan since it carries the detection signatures. `.gitignore` gained `.env`/`*.key`/`*.pem`/`*API*.txt`/`credentials*.json`/`*secret*.txt`. Verified by decoy: a `re_` token in content and a `*API*.txt` filename were both blocked. Commit `1815892`, pushed.
+- **ElevenLabs leak (cross-repo):** the GitGuardian-flagged key lived inline in `E:\Unity\M3AnimatedSeries` `.mcp.json` + `.claude/mcp.json` -- tracked in HEAD, committed in `774a88e`, and pushed to `origin/master`. Root cause: M3's `.gitignore` deliberately whitelisted `!/.mcp.json` + `!/.claude/` (opposite of this repo, which ignores them). Rune rotated + revoked the key (leaked copy now inert). Per the cross-project rule (this session may edit but not push another repo), edited M3's `.gitignore` to drop the two files and left it UNSTAGED; the remaining `rm --cached` + commit + history scrub + force-push is queued for an M3 session (see Active TODO).
+- **Cloudflare:** identified the never-recorded "deferred CF work" as 4 zone security insights (zone `75d5d0f937fa670879de6906f35277c8`, Pro plan, confirmed via read-only graphql MCP). Implemented the one that's a site file -- `/.well-known/security.txt` (RFC 9116, points to the public contact page, Expires 2027-05-31), commit `7f830bb`, pushed. The other three (WAF managed rules / Super Bot Fight Mode / AI Labyrinth) are dashboard toggles now on the Active TODO, with a flagged caveat that zone-wide bot protection could challenge `api.tecvoodoo.com` (Supabase) traffic unless that record is grey-clouded.
+- **No production HTML changed.** Three site-repo commits this session: `1815892` (secret scan), `7f830bb` (security.txt), and this Status update.
+
 ### 2026-05-30 (PM) -- Resend API key leak remediation
 - **Triggered by:** a GitGuardian email ("[TecVooDoo/tecvoodoo] Resend API Key exposed on GitHub", pushed 2026-05-30 13:00:54 UTC). The AM reorg's doc migration had committed `Documents/Archives/ResendAPI.txt` -- a one-line plaintext file holding the live Resend key `re_STPmUe7R...` -- in commit `816306b`.
 - **Diagnosis:** the key was tracked in exactly one commit; no other credential files or secrets in the repo. The contact form (`contact.html`) is `mailto:`-based and never used Resend. Beta-reader signups (the original Resend justification) are fully retired -- grep finds no `beta_readers` UI anywhere in `site/`. The **only** live consumer of the Worker is the Dots and Boxes "Email a friend" invite ([games/dots-and-boxes/index.html:2764](../site/games/dots-and-boxes/index.html#L2764)).
@@ -248,6 +263,7 @@ Duplicate signups (same email + same book) surface as PostgreSQL error 23505; th
 
 | Version | Date | Summary |
 |---------|------|---------|
+| 6 | 2026-05-31 | Leak follow-ups + Cloudflare hardening: secret-scanning pre-commit hook + gitignore rules (`1815892`); ElevenLabs key rotated/revoked + M3 `.gitignore` fix staged for an M3 session; recovered + began the 4 Cloudflare zone security insights, added `/.well-known/security.txt` (`7f830bb`). No production HTML changed. |
 | 5 | 2026-05-30 | Resend API key leak remediation: revoked + rotated the key, purged `ResendAPI.txt` from git history (force-push `64f151c`), verified `origin/main` clean. Prevention TODOs added (gitleaks pre-commit, ElevenLabs/M3AnimatedSeries follow-up). No site code changes. |
 | 4 | 2026-05-30 | TVD studio reorg + doc-system buildout. Doc moved into repo (renamed from TecVooDoo_Web_Status.md), canonical paths rewritten, CLAUDE.md + Studio\INDEX.md + 4 Canonical Tier 2 PerProject_* docs added. No site code changes. |
 | 3 | 2026-05-22 | Post-crash session: rules/patterns/lessons extracted to new `Canonical/Web/` layer; this doc slimmed to state-only. Footers updated across 9 production HTML files. Recent Session History expanded to cover the gap since v2. |

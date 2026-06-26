@@ -1,15 +1,74 @@
 /* TecVooDoo - Embrace the Weird */
 
+/* ==========================================================================
+   BRAND PALETTE  --  TecVooDoo Brand Guide (Danny Schmidt, 2026)
+   RGB palette = digital/web. (CMYK variants exist for print; do not use here.)
+   Shadow #221f1f | Pin #ffffff | Current #23ffd6 | Blood #ec1c24
+   ========================================================================== */
+@font-face {
+    font-family: 'Space Grotesk';
+    src: url('../fonts/SpaceGrotesk-VariableFont_wght.ttf') format('truetype-variations'),
+         url('../fonts/SpaceGrotesk-VariableFont_wght.ttf') format('truetype');
+    font-weight: 300 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* --------------------------------------------------------------------------
+   TYPOGRAPHY SWAP POINT  (Enigma + Buster are LICENSE-PENDING)
+   Brand spec: Enigma = display/headings, Buster = stylized accent,
+   Space Grotesk = body. Enigma/Buster webfont rights are unconfirmed, so for
+   now --font-display and --font-accent fall back to Space Grotesk.
+   >>> When webfont licensing clears: drop the .woff2 files into site/fonts/,
+       uncomment the two @font-face blocks below, and repoint the two CSS
+       vars in :root. Nothing else in the stylesheet needs to change.
+
+   @font-face { font-family:'Enigma'; src:url('../fonts/Enigma.woff2') format('woff2');
+                font-weight:400 700; font-display:swap; }
+   @font-face { font-family:'Buster'; src:url('../fonts/Buster.woff2') format('woff2');
+                font-display:swap; }
+   then in :root:  --font-display: 'Enigma', var(--font-body);
+                   --font-accent:  'Buster', var(--font-body);
+   -------------------------------------------------------------------------- */
+
 :root {
-    --bg-dark: #0d0d0d;
-    --bg-card: #1a1a1a;
-    --bg-hover: #252525;
-    --text-primary: #e0e0e0;
-    --text-secondary: #888;
-    --accent-cyan: #00f0c0;
-    --accent-cyan-dim: #00a080;
-    --accent-red: #ff3366;
-    --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Brand colors (canonical names) */
+    --shadow:  #221f1f;
+    --pin:     #ffffff;
+    --current: #23ffd6;
+    --blood:   #ec1c24;
+
+    /* Surfaces + text (derived tints/shades of the brand palette) */
+    --bg-dark:        var(--shadow);
+    --bg-card:        #2b2727;
+    --bg-hover:       #383333;
+    --border:         #3a3535;
+    --text-primary:   #f2efef;
+    --text-secondary: #9a9292;
+
+    /* Accent aliases (kept so existing rules keep working) */
+    --accent-cyan:     var(--current);
+    --accent-cyan-dim: #1ab9a0;
+    --accent-red:      var(--blood);
+
+    /* Type roles */
+    --font-body:    'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-display: var(--font-body);   /* -> 'Enigma', ... once licensed */
+    --font-accent:  var(--font-body);   /* -> 'Buster', ... once licensed */
+    --font-main:    var(--font-body);   /* legacy alias */
+}
+
+/* Brand typography: headings use the display role, with a blocky/uppercase
+   treatment in display contexts to evoke Enigma while Space Grotesk stands in. */
+h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.hero h1, .page-header h1 {
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 * {
@@ -46,7 +105,7 @@ nav {
     top: 0;
     left: 0;
     right: 0;
-    background: rgba(13, 13, 13, 0.95);
+    background: rgba(34, 31, 31, 0.95);
     backdrop-filter: blur(10px);
     padding: 1rem 2rem;
     z-index: 1000;
@@ -205,7 +264,7 @@ nav ul li a.active {
 
 .auth-option:hover {
     border-color: var(--accent-cyan);
-    background: rgba(0, 240, 192, 0.05);
+    background: rgba(35, 255, 214, 0.05);
 }
 
 .auth-option .icon {
@@ -293,13 +352,13 @@ nav ul li a.active {
 }
 
 .auth-message.success {
-    background: rgba(0, 240, 192, 0.1);
+    background: rgba(35, 255, 214, 0.1);
     color: var(--accent-cyan);
     border: 1px solid var(--accent-cyan);
 }
 
 .auth-message.error {
-    background: rgba(255, 51, 102, 0.1);
+    background: rgba(236, 28, 36, 0.1);
     color: var(--accent-red);
     border: 1px solid var(--accent-red);
 }
@@ -374,7 +433,7 @@ main {
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 40px rgba(0, 240, 192, 0.1);
+    box-shadow: 0 10px 40px rgba(35, 255, 214, 0.1);
     border-color: var(--accent-cyan-dim);
 }
 
@@ -421,13 +480,13 @@ main {
 }
 
 .card .status.live {
-    background: rgba(0, 240, 192, 0.2);
+    background: rgba(35, 255, 214, 0.2);
     color: var(--accent-cyan);
     border: 1px solid var(--accent-cyan);
 }
 
 .card .status.development {
-    background: rgba(255, 51, 102, 0.2);
+    background: rgba(236, 28, 36, 0.2);
     color: var(--accent-red);
     border: 1px solid var(--accent-red);
 }

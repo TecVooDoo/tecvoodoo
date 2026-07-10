@@ -686,7 +686,7 @@
             <a href="mailto:updates+subscribe@tecvoodoo.com?subject=Subscribe&body=Send this email to subscribe to TecVooDoo Updates." class="btn btn-outline">Subscribe</a>
         </div>
         <p>&copy; 2026 TecVooDoo LLC. All rights reserved.</p>
-        <span class="footer-updated">Updated: May 22, 2026</span>
+        <span class="footer-updated">Updated: Jul 10, 2026</span>
     </footer>
 
     <!-- Supabase JS -->
@@ -2166,16 +2166,43 @@
                                    game.status === 'waiting' ? ' (Waiting)' : '';
                 const item = document.createElement('div');
                 item.className = 'my-game-item';
-                item.innerHTML = `
-                    <div class="my-game-info">
-                        <span class="opponent">vs ${game.opponent || 'Waiting...'}</span>
-                        <span class="status">Code: ${game.id} | ${game.gridSize}x${game.gridSize}${statusText}</span>
-                    </div>
-                    <div class="my-game-actions">
-                        <button class="btn btn-outline" onclick="resumeGame('${game.id}')">Resume</button>
-                        <button class="btn btn-outline" onclick="removeGame('${game.id}')" style="color: var(--accent-red); border-color: var(--accent-red);">X</button>
-                    </div>
-                `;
+
+                // Build with DOM APIs + textContent so an opponent's display_name
+                // (attacker-controlled) can never inject HTML/script into this origin.
+                const info = document.createElement('div');
+                info.className = 'my-game-info';
+
+                const opponentEl = document.createElement('span');
+                opponentEl.className = 'opponent';
+                opponentEl.textContent = 'vs ' + (game.opponent || 'Waiting...');
+
+                const statusEl = document.createElement('span');
+                statusEl.className = 'status';
+                statusEl.textContent = `Code: ${game.id} | ${game.gridSize}x${game.gridSize}${statusText}`;
+
+                info.appendChild(opponentEl);
+                info.appendChild(statusEl);
+
+                const actions = document.createElement('div');
+                actions.className = 'my-game-actions';
+
+                const resumeBtn = document.createElement('button');
+                resumeBtn.className = 'btn btn-outline';
+                resumeBtn.textContent = 'Resume';
+                resumeBtn.addEventListener('click', () => resumeGame(game.id));
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn btn-outline';
+                removeBtn.style.color = 'var(--accent-red)';
+                removeBtn.style.borderColor = 'var(--accent-red)';
+                removeBtn.textContent = 'X';
+                removeBtn.addEventListener('click', () => removeGame(game.id));
+
+                actions.appendChild(resumeBtn);
+                actions.appendChild(removeBtn);
+
+                item.appendChild(info);
+                item.appendChild(actions);
                 list.appendChild(item);
             });
         }

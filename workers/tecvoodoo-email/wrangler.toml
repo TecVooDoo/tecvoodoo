@@ -1,0 +1,12 @@
+name = "tecvoodoo-email"
+main = "worker.js"
+compatibility_date = "2025-12-28"
+preview_urls = false
+workers_dev = true
+
+# account_id is intentionally omitted here (this repo is public). The deployer
+# sets CLOUDFLARE_ACCOUNT_ID, or wrangler auto-detects it from a single-account token.
+
+[observability]
+enabled = true
+head_sampling_rate = 1

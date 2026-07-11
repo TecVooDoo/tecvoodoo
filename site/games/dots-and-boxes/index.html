@@ -670,6 +670,7 @@
                         <input type="email" id="invite-email" placeholder="Friend's email address" style="flex: 1; padding: 0.5rem; background: var(--bg-dark); border: 1px solid #444; border-radius: 4px; color: var(--text-primary);">
                         <button class="btn btn-primary" onclick="sendEmailInvite()">Send</button>
                     </div>
+                    <div id="turnstile-invite" style="margin-top: 0.75rem;"></div>
                 </div>
             </div>
 
@@ -691,6 +692,9 @@
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Cloudflare Turnstile (bot protection for the email-invite endpoint) -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
     <script>
         // Supabase config
@@ -2759,12 +2763,26 @@
             setTimeout(() => btn.textContent = originalText, 2000);
         }
 
+        // Turnstile widget for the email-invite form (bot protection).
+        // Rendered lazily when the form opens so it works inside the hidden container.
+        const TURNSTILE_SITEKEY = '0x4AAAAAADzh2M6i0_cI0xm0';
+        let turnstileWidgetId = null;
+        function renderInviteTurnstile() {
+            if (turnstileWidgetId !== null) return;
+            if (!window.turnstile) { setTimeout(renderInviteTurnstile, 300); return; }
+            turnstileWidgetId = window.turnstile.render('#turnstile-invite', {
+                sitekey: TURNSTILE_SITEKEY,
+                action: 'turnstile-spin-v1'
+            });
+        }
+
         // Toggle email invite form
         function emailInvite() {
             const form = document.getElementById('email-invite-form');
             form.classList.toggle('hidden');
             if (!form.classList.contains('hidden')) {
                 document.getElementById('invite-email').focus();
+                renderInviteTurnstile();
             }
         }
 
@@ -2773,6 +2791,15 @@
             const email = document.getElementById('invite-email').value.trim();
             if (!email) {
                 alert('Please enter an email address');
+                return;
+            }
+
+            // Require a Turnstile token -- the Worker rejects invites without one.
+            const turnstileToken = (window.turnstile && turnstileWidgetId !== null)
+                ? window.turnstile.getResponse(turnstileWidgetId) : '';
+            if (!turnstileToken) {
+                alert('Please complete the verification below, then tap Send again.');
+                renderInviteTurnstile();
                 return;
             }
 
@@ -2797,7 +2824,8 @@
                         to: email,
                         playerName: playerName,
                         gameCode: gameCode,
-                        gameLink: gameLink
+                        gameLink: gameLink,
+                        turnstileToken: turnstileToken
                     })
                 });
 
@@ -2819,6 +2847,11 @@
                 sendBtn.textContent = originalText;
                 sendBtn.disabled = false;
                 alert('Failed to send invite. Please try again or use the copy link option.');
+            } finally {
+                // Turnstile tokens are single-use; reset so a retry/next invite gets a fresh one.
+                if (window.turnstile && turnstileWidgetId !== null) {
+                    window.turnstile.reset(turnstileWidgetId);
+                }
             }
         }
 

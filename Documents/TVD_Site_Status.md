@@ -32,9 +32,9 @@ Code patterns, bug patterns to avoid, deployment pipeline, OAuth setup details, 
 
 **Current Phase:** Live / Maintenance.
 
-**Last session (2026-07-10 PM):** Closed the `tecvoodoo-email` open relay with Cloudflare Turnstile (server-side siteverify inside the Worker + a Managed widget in the DAB invite form); version-controlled the Worker at `workers/tecvoodoo-email/`. Finished security batch #2. Clean tree, nothing mid-flight. Detail in the 2026-07-10 (PM) history entry.
+**Last session (2026-07-18):** Status-doc hygiene sweep (this doc 61 KB -> 23 KB per v1.14 Living-Doc Hygiene; archive split out) + new-computer session open. Environment is **mid-migration to a new machine** (Rune doing other migration work in parallel); canonical still v1.14/aligned, repo clean + synced with GitHub, MCP tokens carried over. Docs-only -- no site/infra change. Detail in the 2026-07-18 history entry.
 
-**Prior:** 2026-07-10 (AM) -- site scope review (blanket Fable refactor ruled not worth it) + hygiene batch #1 + DAB stored-XSS fix. // 2026-06-26 -- brand reskin Phase 1+2 shipped + live.
+**Prior:** 2026-07-10 (PM) -- `tecvoodoo-email` Turnstile lockdown (closed the open relay), finished security batch #2. // 2026-07-10 (AM) -- site scope review + hygiene batch #1 + DAB stored-XSS fix.
 
 Full recent history is below; older narrative (2026-06-26 and earlier) is in [TVD_Site_StatusArchive.md](TVD_Site_StatusArchive.md).
 
@@ -220,6 +220,10 @@ Duplicate signups (same email + same book) surface as PostgreSQL error 23505; th
 ---
 
 ## Recent Session History
+
+### 2026-07-18 -- Status-doc hygiene sweep + new-computer session open
+- **Session open (new machine, migration in progress):** canonical check -- UniversalWorkflow still **v1.14**, aligned (no delta). Site repo clean + in sync with GitHub (`45ab219` at open); git identity + MCP auth tokens carried over; all Unity trees present. Corrected a stale path -- DLYH source is now `E:\Unity\DontLoseYourHead\`, not the old `E:\Unity\DLYH\`. `git safe.directory` unset but git works on E: (no action unless it errors); 2 stale `_lock.json` files in `.mcp-auth` (only matters if `/mcp` reconnect misbehaves); a `nul` reserved-name file sits in `E:\Unity\` (cosmetic).
+- **Swept this doc 61 KB -> 23 KB** per v1.14 Living-Doc Hygiene: added a `**Budget:**` header line; collapsed the Quick Context "Prior session" mega-block (~20 KB that duplicated Recent Session History) to a summary + a 2-entry Prior chain; kept the 2 latest session entries and moved older history (2026-06-26 -> 2026-01-05) + retired Version-History rows (v1-v8) + completed Cloudflare-insight detail to new `TVD_Site_StatusArchive.md`; promoted the orphaned 2026-06-26 brand-reskin narrative (was only in Quick Context) to a proper archived entry. Lossless -- all 15 session entries + 14 version rows verified across both files. Commits `3f89a60` (sweep) + this close; pushed. Docs-only, no site/ change, no Pages deploy impact.
 
 ### 2026-07-10 (PM) -- Email Worker lockdown (Turnstile)
 - **Finished batch #2:** closed the `tecvoodoo-email` open-relay exposure (the endpoint accepted any POST and sent email from `noreply@tecvoodoo.com`). Chose the **wrangler** path (paired: Rune minted a scoped CF API token; guided click-by-click).

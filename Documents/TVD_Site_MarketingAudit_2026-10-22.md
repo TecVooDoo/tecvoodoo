@@ -125,3 +125,20 @@ Built after `BM_MarketingAssetManifest.md` (S312) landed. Rendered locally in Ch
 **Not in the swap (needs Rune's ruling):** the DLYH card framing, the HOK "five rivers" line, bloodminergame.com DNS, normalizing the other cards' ` - ` dashes, the games.html meta description, and the footer date.
 
 **To ship:** Rune reviews the branch, then `git checkout main && git merge --ff-only marketing/bm-steam-swap && git push`. Pushing `main` deploys live.
+
+---
+
+## 7. Card follow-ups -- PREPARED on local branch `marketing/site-cards` (stacked on the BM swap, not pushed)
+
+These are Rune's rulings, relayed by sandbox-39 after Rune returned:
+
+1. **DLYH card:** moved from "Now Playtesting" to "Up Next". The badge is "3D Version in Development" and the Play Now CTA to the frozen `dlyh.pages.dev` build is removed. The copy follows `DLYH_Status.md` (DLYH3D Phase 2: 3D grid + guillotine, salvaged ExecutionerAI). No 3D art exists yet, so the card keeps the 2D screenshot, captioned "Pictured: the original 2D build". With DAB alone, the "Now Playtesting" subtitle now ends "...help us test and refine it." `site/games/dlyh/` still exists but is no longer linked.
+2. **Hide 'N Reap card added:**
+   - Image `images/hide-n-reap-concept.jpg` = `E:\Unity\HideNReap\Documents\HnR_Living_World.PNG` (2026-04-02, 1280x720), re-encoded to a 124 KB JPEG. It is the only HNR piece with the logo that matches the current design. The Dec 2025 `Hide_n_Reap_Concept.PNG` comic describes the retired single-player concept.
+   - Copy is from `HNR_GDD.md` v2.0 section 1.
+   - **Art rights: CLEARED.** The art looked like assembled stock clip art and had no provenance record, so it was flagged. Rune confirmed on 2026-10-22 (relayed by sandbox-39) that he made the HNR concept art himself and owns it. Cleared for public use; flag closed.
+   - The image keeps its baked-in "Living World" slide label.
+3. **HOK "five rivers":** left as is. Rune deferred it.
+4. **bloodminergame.com:** Rune is doing the DNS and Redirect Rule himself. Exact dashboard steps were sent via sandbox-39: proxied dummy A records for `@` and `www`, a host-matched 302 to the Steam page with `utm_source=bloodminergame.com`, and `demo.` untouched. Afterwards, update `TVD_AssetInventory.md:44`.
+
+**To ship both branches:** `git checkout main && git merge --ff-only marketing/site-cards && git push`. This brings the BM swap along, because the branches are stacked.

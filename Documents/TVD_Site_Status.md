@@ -5,8 +5,8 @@
 **Platform:** Web (HTML5/CSS/JavaScript) + Supabase + Cloudflare
 **Source:** `E:\TecVooDoo\TecVooDooSite`
 **Live URL:** https://tecvoodoo.com
-**Document Version:** 14
-**Last Updated:** July 18, 2026
+**Document Version:** 15
+**Last Updated:** October 22, 2026
 **Budget:** ~15 KB (byte-based). Over budget -> sweep per [UniversalWorkflow](file:///E:/Unity/Sandbox/Documents/Canonical/UniversalWorkflow.md) section Living-Doc Hygiene: replace header fields in place (never append); keep Quick Context's `Prior:` chain to <=2 one-liners; roll old session entries + retired Version-History rows to [TVD_Site_StatusArchive.md](TVD_Site_StatusArchive.md).
 
 ---
@@ -32,9 +32,14 @@ Code patterns, bug patterns to avoid, deployment pipeline, OAuth setup details, 
 
 **Current Phase:** Live / Maintenance.
 
-**Last session (2026-07-18):** Status-doc hygiene sweep (this doc 61 KB -> 23 KB per v1.14 Living-Doc Hygiene; archive split out) + new-computer session open. Environment is **mid-migration to a new machine** (Rune doing other migration work in parallel); canonical still v1.14/aligned, repo clean + synced with GitHub, MCP tokens carried over. Docs-only -- no site/infra change. Detail in the 2026-07-18 history entry.
+**Last session (2026-10-22):** Marketing staleness audit for sandbox-39 (the BM marketing pass). Shipped the result LIVE on Rune's go (`14ffbed`):
+- BM card now shows Steam capsule art, the Steam short description, "Coming Soon -- Steam", and a Wishlist CTA. Home page has a BM block (Steam's Game Website field lands there).
+- DLYH card changed to "3D Version in Development".
+- New Hide 'N Reap card.
 
-**Prior:** 2026-07-10 (PM) -- `tecvoodoo-email` Turnstile lockdown (closed the open relay), finished security batch #2. // 2026-07-10 (AM) -- site scope review + hygiene batch #1 + DAB stored-XSS fix.
+Audit: `Documents/TVD_Site_MarketingAudit_2026-10-22.md`. Open follow-ups are in Active TODO -> Marketing follow-ups.
+
+**Prior:** 2026-07-18 -- Status-doc hygiene sweep (61 KB -> 23 KB) + new-computer session open. // 2026-07-10 (PM) -- `tecvoodoo-email` Turnstile lockdown (closed the open relay).
 
 Full recent history is below; older narrative (2026-06-26 and earlier) is in [TVD_Site_StatusArchive.md](TVD_Site_StatusArchive.md).
 
@@ -49,6 +54,14 @@ Full recent history is below; older narrative (2026-06-26 and earlier) is in [TV
 - [ ] Move Supabase migrations into a version-controlled folder (currently SQL Editor only).
 - [ ] Newsletter subscription: replace `mailto:updates+subscribe@tecvoodoo.com` placeholders with a Supabase-backed signup.
 - Recently completed (detail in history/archive): DAB email-Worker Turnstile lockdown + DAB stored-XSS fix + `auth-test.html` de-deployed (2026-07-10); secret-scanning pre-commit hook + both GitGuardian alerts closed (2026-05-31).
+
+### Marketing follow-ups (from the 2026-10-22 audit)
+- [ ] **HOK card "five legendary rivers"** -- V1 is locked to Acheron + Styx (HOK S32). Rune **deferred** the rewording; more HOK changes are coming, so reword alongside those.
+- [ ] **Orphaned `site/games/dlyh/`** -- still deployed (it iframes the frozen `dlyh.pages.dev` 2D build), but nothing links to it since the DLYH card went "3D Version in Development". Rune decides: delete it, or keep it as an unlinked prototype page. This also makes the DLYH half of the Branding nav-reskin item below moot if it is deleted.
+- [ ] **`TecVooDooMarketing\TVD_MarketingStrategy.md:199` "port DLYH to itch" plan is stale** -- DLYH3D targets itch directly (landscape PC WebGL), so the plan is no longer a site port. The DAB half still stands (see the itch item in Immediate). The Google Play part of the line was already struck 2026-10-22 (TVDStudio `f69c268`).
+- [ ] **Blender hero render (later)** -- a dedicated hero image for the BM/home block, to replace the capsule crop. If it derives from the 46 MB key-art masters, bloodminer-b7 does the export after Rune approves (per `BM_MarketingAssetManifest.md`).
+- [ ] **`TVD_AssetInventory.md:44` (bloodminergame.com "not yet pointed anywhere")** -- Rune + sandbox-39 set up the apex/www -> Steam redirect on 2026-10-22, and sandbox-39 is verifying it. Update the inventory line next session, after checking with `curl -sI https://bloodminergame.com`.
+- [ ] **Canonical marker stale** -- this doc still says UniversalWorkflow **v1.14**, while Studio Status is aligned to **v2.6**. Read the v1.15+ Revision History rows at the next session open and update the marker. Not done at this close.
 
 ### Cloudflare zone security (tecvoodoo.com -- zone `75d5d0f937fa670879de6906f35277c8`, Pro plan)
 - [x] The 4 zone security insights recovered 2026-05-31 (security.txt `7f830bb`, WAF Managed Ruleset, Super Bot Fight Mode = Block definitely-automated, AI Labyrinth reviewed-and-left-off) + DMARC in monitor mode -- **all closed 2026-05-31**. Detail in [TVD_Site_StatusArchive.md](TVD_Site_StatusArchive.md).
@@ -68,7 +81,7 @@ Full recent history is below; older narrative (2026-06-26 and earlier) is in [TV
 - [ ] **Phase 3:** circuit/grid pattern backgrounds (guide: <=50% opacity behind text) + more Hex placements (404 / empty states). `images/hex.svg` is already in-repo, unreferenced, ready to place.
 - [ ] Interior-page OG **images** -- pages currently reuse `og-image.png`; give the story/games pages page-specific share art later.
 - [ ] Favicon fallback -- the SVG-only favicon goes faint on white tab strips; add a Shadow-bg `.ico`/PNG + `apple-touch-icon` (needs an off-box rasterizer; this box has none).
-- [ ] Site lint crumbs (2026-07-10) -- refresh `sitemap.xml` (add privacy + the 2 story pages; update stale Dec-2025 lastmod); recompress `blood-miner-keyart.png` (1.8 MB); remove the root `tecvoodoo-logo-small.png` orphan (keep the `images/` copy); games.html "Word games with guillotines" meta/header still undersells the catalog.
+- [ ] Site lint crumbs (2026-07-10) -- refresh `sitemap.xml` (add privacy + the 2 story pages; update stale Dec-2025 lastmod); ~~recompress `blood-miner-keyart.png` (1.8 MB)~~ (done 2026-10-22: file deleted, replaced by the 151 KB `blood-miner-capsule.jpg`); remove the root `tecvoodoo-logo-small.png` orphan (keep the `images/` copy); games.html "Word games with guillotines" meta/header still undersells the catalog.
 
 ### Soon
 - [ ] Add analytics (Plausible or Fathom)
@@ -221,6 +234,25 @@ Duplicate signups (same email + same book) surface as PostgreSQL error 23505; th
 
 ## Recent Session History
 
+### 2026-10-22 -- Marketing staleness audit + BM Steam swap + card refresh (shipped live)
+- **Driven by cross-session requests from sandbox-39** (BM marketing-continuity pass; Rune AFK, then back). It started as a read-only audit and became an audit doc: `Documents/TVD_Site_MarketingAudit_2026-10-22.md`.
+  - BM card fully stale: Jun 2 mobile portrait render, "Google Play", "idle" copy, no CTA.
+  - Home page had no BM, even though Steam's Game Website field lands there.
+  - `bloodminergame.com` had no DNS records.
+  - DLYH card advertised the frozen 2D build.
+  - HOK card over-promised five rivers.
+  - No image/alt specs exist in any brand or standards doc.
+- **Built on stacked local branches**, `marketing/bm-steam-swap` then `marketing/site-cards`:
+  - BM card: Main Capsule as a 151 KB JPEG, Steam short description v2, Wishlist CTA with UTM. Home "Coming Soon to Steam" block. Old 1.8 MB keyart deleted.
+  - DLYH card moved to Up Next as "3D Version in Development", Play link dropped.
+  - New Hide 'N Reap card (`HnR_Living_World` concept art). Rune confirmed it is his own art.
+  - Rendered in local Chrome before review.
+- **Rune: "push the site cards"** -> fast-forwarded `main` and pushed (`c5637d3..14ffbed`). Pages was live within ~15 s. Live-verified: 7 cards, Wishlist CTA, home block, footer Oct 22.
+- **Card-slot fact worth keeping:** `.card-image` is a fixed 200px tall with `object-fit: contain`, so portrait art renders as a narrow strip. Use landscape (~16:9) art for cards.
+- **Studio side** (TVDStudio `f69c268`): projects CSV BM row moved to Steam-first; DLYH split into a 2D (Paused) row and a new DLYH3D row; MarketingStrategy's Google Play line struck through.
+- **Cloudflare:** Rune signed in mid-session. I wrote the dashboard steps for the bloodminergame.com redirect and Rune did it with sandbox-39. **No Cloudflare changes from this session.**
+- **Swept** the 2026-07-10 (AM) entry to the archive (2-entry window).
+
 ### 2026-07-18 -- Status-doc hygiene sweep + new-computer session open
 - **Session open (new machine, migration in progress):** canonical check -- UniversalWorkflow still **v1.14**, aligned (no delta). Site repo clean + in sync with GitHub (`45ab219` at open); git identity + MCP auth tokens carried over; all Unity trees present. Corrected a stale path -- DLYH source is now `E:\Unity\DontLoseYourHead\`, not the old `E:\Unity\DLYH\`. `git safe.directory` unset but git works on E: (no action unless it errors); 2 stale `_lock.json` files in `.mcp-auth` (only matters if `/mcp` reconnect misbehaves); a `nul` reserved-name file sits in `E:\Unity\` (cosmetic).
 - **Swept this doc 61 KB -> 23 KB** per v1.14 Living-Doc Hygiene: added a `**Budget:**` header line; collapsed the Quick Context "Prior session" mega-block (~20 KB that duplicated Recent Session History) to a summary + a 2-entry Prior chain; kept the 2 latest session entries and moved older history (2026-06-26 -> 2026-01-05) + retired Version-History rows (v1-v8) + completed Cloudflare-insight detail to new `TVD_Site_StatusArchive.md`; promoted the orphaned 2026-06-26 brand-reskin narrative (was only in Quick Context) to a proper archived entry. Lossless -- all 15 session entries + 14 version rows verified across both files. Commits `3f89a60` (sweep) + this close; pushed. Docs-only, no site/ change, no Pages deploy impact.
@@ -235,17 +267,7 @@ Duplicate signups (same email + same book) surface as PostgreSQL error 23505; th
 - **Env notes:** the skill's bash scripts need `jq`/`python3`; this box has neither (python = Store stub) -> drove the CF API with `curl` + `node`. wrangler 4.98 present. CF token handed off via a local file (`~/.cf-turnstile-token`), never in chat; token + secret files deleted at close. (Rune can rotate the token; it never entered the transcript.)
 - **Residual (low, noted not fixed):** invite/beta email HTML interpolates user-controlled `sender`/`gameLink` into the body (email-HTML-injection/phishing vector) -- now gated behind Turnstile (real humans only). Add `itch.zone` to the widget only if DAB-on-itch ever needs invites (out of current itch scope).
 
-### 2026-07-10 -- Site scope review + hygiene batch #1 + DAB XSS fix
-- **Triggered by:** Rune weighing whether to switch this project to **Fable** for a deep refactor (as done on some Unity projects) "in case it finds something we missed." Agreed to scope first before spending tokens.
-- **Verdict: a blanket Fable deep-refactor of site + marketing is NOT worth it.** The site is ~11/12 static markup + one coherent 2963-line game file (`site/games/dots-and-boxes/index.html`); marketing is prose. Nothing architecturally rotten. The only real code/risk surface is the DAB game -> a targeted review beats a whole-session refactor.
-- **DAB scope findings:** (1) **stored XSS** -- an opponent's `display_name` (attacker-controlled via anon `players` insert) was rendered via `innerHTML` in `loadMyGames()`, in the tecvoodoo.com origin where the Supabase session token lives = possible account takeover. **FIXED** this session (My Games row rebuilt with DOM APIs + `textContent`; Resume/Remove via `addEventListener` closures, not string-built `onclick`). (2) **email Worker is an open, unauthenticated relay** (`Access-Control-Allow-Origin: *`, no origin/auth/rate-limit) -- NOT fixed; real fix = Turnstile, entangled with the itch origin (see Immediate). (3) no server-side move validation (client-trusted `state`/`score`; RLS can't judge move legality) -- acceptable for casual play, noted. (4) inline Supabase key is the **publishable** key -- public by design, not a leak. (5) minor: vestigial `#difficulty-options` dead code (AI always 'normal'); matchmaking races; "Play Random Person" drops to a disguised AI after 5s.
-- **itch-port recon (DAB):** **CORS is NOT the blocker** the notes feared -- the email Worker is `*`-open and Supabase REST/Auth/Realtime are permissive by default, so data/realtime/email likely work from the itch origin unchanged. Real blockers: (a) OAuth + magic-link redirect to `window.location.href` = the sandboxed `itch.zone` URL -> needs allowlisting in Supabase Auth + must survive iframe storage partitioning (usually breaks); **anonymous auth is the only method likely to work in-iframe.** (b) share-link/email-invite build `window.location.origin+pathname` = the ephemeral itch iframe URL, not a shareable game link -> invite/multiplayer-by-link broken on itch unless rewritten to a canonical `tecvoodoo.com/...?game=CODE`. Recommended itch scope: ship DAB as local + vs-AI + anonymous-online; keep full OAuth+invite multiplayer on tecvoodoo.com. Corrects the [[project-itch-migration-pending]] "CORS is the wrinkle" framing.
-- **Hygiene batch #1 shipped (`site/`):** deleted `images/dlyh-concept.png` (5.6 MB orphan, biggest file on the site); added per-page OG/Twitter meta to `games.html`, `books.html`, `encapsulated-fear.html`, `genie-in-a-test-tube.html` (was index-only; all reuse `og-image.png` for now, story pages use `og:type=article`); fixed 2 non-ASCII em-dashes in `about.html` (-> `&mdash;`); moved `auth-test.html` (public dev harness, self-contained) out of `site/` to repo `dev/` so Pages no longer serves it.
-- **Brand leftovers reviewed (batch #3, deferred):** Rune ruled **Enigma + Buster are NOT usable as webfonts -- only where already baked into graphics we have** (logos/lettermarks/Hex art). So the `style.css` TYPOGRAPHY SWAP POINT is now a **permanent** fallback (Space Grotesk stays for display/accent); the "license-pending" comment should be finalized. This **unblocks Phase 3** (patterns + Hex; `images/hex.svg` is already in-repo, unused, ready to place). Also: the 2 game embeds (DAB, DLYH) were never reskinned -- still old `tecvoodoo-logo-small.png` + text nav, not the TvD lettermark. All queued in Active TODO -> Branding.
-- **Lint pass (delegated agent):** clean basics (no broken links, all `<img>` have `alt`, `lang`/`title` present). Remaining crumbs queued under Branding: stale/incomplete `sitemap.xml`; `blood-miner-keyart.png` 1.8 MB; root `tecvoodoo-logo-small.png` orphan; ~180-line Supabase auth block copy-pasted across 6 pages (shared `js/auth.js` candidate someday).
-- **Canonical check:** UniversalWorkflow v1.13 -> v1.14 (new **Living-Doc Hygiene** section: replace-don't-append, byte budgets, `**Budget:**` header line, steps 6b/6c). Web-applicable part = doc hygiene; the rest (6b C# rule-audits, 5a MCP brief v3.0, CodingStandards v2.0 SOLID) is Unity-specific. Marker bumped to v1.14. This doc is now ~48 KB vs the ~15 KB Status budget -> a hygiene sweep is queued in Immediate.
-
-*Older entries (2026-06-26 -> 2026-01-05) are archived in [TVD_Site_StatusArchive.md](TVD_Site_StatusArchive.md).*
+*Older entries (2026-07-10 AM -> 2026-01-05) are archived in [TVD_Site_StatusArchive.md](TVD_Site_StatusArchive.md).*
 
 ---
 
@@ -253,6 +275,7 @@ Duplicate signups (same email + same book) surface as PostgreSQL error 23505; th
 
 | Version | Date | Summary |
 |---------|------|---------|
+| 15 | 2026-10-22 | Marketing audit + BM Steam swap + DLYH/HNR card refresh, shipped live (`14ffbed`). Added Active TODO -> Marketing follow-ups. Swept the 2026-07-10 (AM) entry to the archive. |
 | 14 | 2026-07-18 | Status-doc hygiene sweep (v1.14 Living-Doc Hygiene): the doc had grown to ~60 KB vs its ~15 KB budget. Split older session history (2026-06-09 -> 2026-01-05), retired Version-History rows (v1-v8), and completed Cloudflare-insight detail to new `TVD_Site_StatusArchive.md`; added a `**Budget:**` header line; collapsed the Quick Context mega-lines into a summary + a 2-entry Prior chain; promoted the orphaned 2026-06-26 brand-reskin narrative to a proper session entry. Session-open canonical check: UniversalWorkflow still v1.14 -- aligned. No site/code changes. |
 | 13 | 2026-07-10 (PM) | Email Worker lockdown: closed the `tecvoodoo-email` open relay with Cloudflare Turnstile (server-side siteverify inside the Worker + a Managed widget in the DAB invite form). Verified no-token->400 / bogus->403 / real invite sent+landed; `RESEND_API_KEY` preserved. Version-controlled the Worker source at `workers/tecvoodoo-email/`. Finishes batch #2. |
 | 12 | 2026-07-10 | Site scope review + hygiene batch #1 + DAB XSS fix. Decided a blanket Fable refactor of site+marketing isn't worth it (markup + one game file + prose). Fixed a stored-XSS sink in DAB (opponent name via `innerHTML` -> DOM/`textContent`). Batch #1: deleted 5.6 MB `dlyh-concept.png` orphan, per-page OG meta on games/books/2 story pages, fixed 2 ASCII em-dashes in about.html, moved public `auth-test.html` to repo `dev/`. Canonical marker v1.13 -> v1.14. Deferred: brand leftovers (#3) + itch port (#4). |
